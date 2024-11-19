@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta name="description" content="{{ config.description }}" />
+    <meta charset="utf-8">
+    <title>{{ config.name }}</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="author" content="">
+    {% block metas %}{% endblock %}
+    {% block links %}{% endblock %}
+    {% block scripts %}{% endblock %}
+    <link rel="stylesheet" href="css/style.css">
+    <script src="http://code.jquery.com/jquery-latest.min.js"></script>
+</head>
+
+<body>
+    {%- include "header.html" %}
+    <div class="container">
+        {% block body %}{% endblock %}
+    </div>
+    <script>
+    </script>
+    {%- include "footer.html" %}
+</body>
+
+</html>
