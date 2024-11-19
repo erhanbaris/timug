@@ -3,6 +3,8 @@ mod context;
 mod error;
 mod post;
 
+use std::{fs::File, io::Write};
+
 use anyhow::Result;
 use context::TimugContext;
 use minijinja::{context, path_loader, Environment};
@@ -10,23 +12,12 @@ use post::Post;
 
 fn main() -> Result<()> {
     let context = TimugContext::build(None);
-    let post = Post::load(&context, "How-I-Identify-Top-Talent-for-a-Small-Agile-Team.md")?;
-    println!("Post: {:?}", post);
+    // println!("Post: {:?}", post);
 
     let base = context.get_template_file_content("base.html")?;
     let footer = context.get_template_file_content("footer.html")?;
     let header = context.get_template_file_content("header.html")?;
     let post = context.get_template_file_content("post.html")?;
-
-    let markdown_input = "hello world";
-    let parser = pulldown_cmark::Parser::new(markdown_input);
-
-    // Write to a new String buffer.
-    let mut html_output = String::new();
-    pulldown_cmark::html::push_html(&mut html_output, parser);
-
-    assert_eq!(&html_output, "<p>hello world</p>\n");
-    println!("Hello, world!");
 
     let mut env = Environment::new();
     env.set_loader(path_loader(context.get_templates_path()));
@@ -35,10 +26,19 @@ fn main() -> Result<()> {
     env.add_template("base.html", &base)?;
     env.add_template("post.html", &post)?;
     let template = env.get_template("post.html")?;
-    println!(
-        "{}",
-        template.render(context!(config => context.config)).unwrap()
-    );
+    let post = Post::load(
+        &context,
+        "How-I-Identify-Top-Talent-for-a-Small-Agile-Team.md",
+    )?;
+
+    let content = template
+        .render(context!(config => context.config, post => post))
+        .unwrap();
+
+    println!("{:?}", &post.date);
+
+    let mut file = File::create("foo.html")?;
+    file.write_all(content.as_bytes())?;
 
     Ok(())
 }

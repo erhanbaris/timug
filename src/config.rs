@@ -11,10 +11,13 @@ pub struct TimugConfig {
     pub blog_path: PathBuf,
 
     #[serde(default = "default_language")]
-    pub language: String,
+    pub lang: String,
 
     #[serde(default = "default_theme")]
     pub theme: String,
+
+    #[serde(default)]
+    pub site_url: String,
 }
 
 fn default_blog_path() -> PathBuf {

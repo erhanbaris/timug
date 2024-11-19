@@ -1,5 +1,18 @@
 {% extends "base.html" %}
 {% block body %}
-  Hello Erhan!
-{% endblock %}
+<article
+  class="mx-20 my-20 px-20 py-20 divide-y divide-slate-400/20 rounded-lg bg-white text-[0.8125rem] leading-5 text-slate-900 shadow-xl shadow-black/5 ring-1 ring-slate-700/10">
+  <div class="w-full mx-auto space-y-4 text-center">
+    {%- for tag in post.tags %}
+    <p class="text-xs font-semibold tracking-wider uppercase">#{{ tag -}}</p>
+    {% endfor %}
 
+    <h1 class="text-4xl font-bold leading-tight md:text-5xl"> {{ post.title }}</h1>
+    <p class="text-sm text-gray-400"> by <a rel="noopener noreferrer" href="#" target="_blank"
+        class="underline text-violet-400"><span itemprop="name">Erhan BARIS</span></a> on <time
+        datetime="2021-02-12 15:34:18-0200">Feb 12th 2021</time></p>
+  </div>
+
+  <div class="mt-20">{{ post.content|safe }}</div>
+</article>
+{% endblock %}

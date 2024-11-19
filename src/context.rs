@@ -56,16 +56,6 @@ impl TimugContext {
         self.templates_path.clone()
     }
 
-    pub fn get_posts_path(&self) -> Result<String, TimugError> {
-        Ok(self
-            .config
-            .blog_path
-            .join(POSTS_PATH)
-            .to_str()
-            .ok_or_else(|| TimugError::PathCouldNotGenerated(POSTS_PATH.to_string()))?
-            .to_string())
-    }
-
     pub fn get_template_file_content(&self, name: &str) -> Result<String, TimugError> {
         match std::fs::read_to_string(self.get_template_file_path(name)) {
             Ok(content) => Ok(content),
