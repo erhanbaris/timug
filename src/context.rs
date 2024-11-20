@@ -1,17 +1,18 @@
 use std::path::PathBuf;
 
+use colored::Colorize;
+
 use crate::{config::TimugConfig, error::TimugError, post::Post};
 
 const TEMPLATES_PATH: &str = "templates";
 const POSTS_PATH: &str = "posts";
-const DRAFTS_PATH: &str = "drafts";
 const CONFIG_FILE_NAME: &str = "timug.yaml";
 
+#[derive(Debug, Default)]
 pub struct TimugContext {
     pub config: TimugConfig,
     pub templates_path: PathBuf,
     pub posts_path: PathBuf,
-    pub drafts_path: PathBuf,
     pub posts: Vec<Post>,
 }
 
@@ -23,19 +24,18 @@ impl TimugContext {
             None => current_path.join(CONFIG_FILE_NAME),
         };
 
+        println!("{}: {:?}", "Reading config file from".purple(), config_path);
         let config_content =
             std::fs::read_to_string(&config_path).expect("Failed to read config file");
         let config = serde_yaml::from_str(&config_content).expect("Failed to parse config file");
 
         let templates_path = Self::get_path(&config, TEMPLATES_PATH).join(config.theme.clone());
         let posts_path = Self::get_path(&config, POSTS_PATH);
-        let drafts_path = Self::get_path(&config, DRAFTS_PATH);
 
         Self {
             config,
             templates_path,
             posts_path,
-            drafts_path,
             posts: vec![],
         }
     }

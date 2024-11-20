@@ -2,4 +2,7 @@ name: Erhan Baris's Blog
 description: Erhan Baris's Blog
 language: tr
 theme: default
+deployment_folder: public
 blog_path: /Users/erhanbaris/ClionProjects/timug/src/
+author_name: Erhan Baris
+author_email: erhanbaris@gmail.com

@@ -2,7 +2,7 @@ use std::path::PathBuf;
 
 use serde::{Deserialize, Serialize};
 
-#[derive(Debug, PartialEq, Serialize, Deserialize)]
+#[derive(Debug, Default, PartialEq, Serialize, Deserialize)]
 pub struct TimugConfig {
     pub name: String,
     pub description: String,
@@ -16,8 +16,13 @@ pub struct TimugConfig {
     #[serde(default = "default_theme")]
     pub theme: String,
 
+    #[serde(default = "default_deployment_folder")]
+    pub deployment_folder: PathBuf,
+
     #[serde(default)]
     pub site_url: String,
+    pub author_name: String,
+    pub author_email: String,
 }
 
 fn default_blog_path() -> PathBuf {
@@ -30,4 +35,8 @@ fn default_theme() -> String {
 
 fn default_language() -> String {
     "en".to_string()
+}
+
+fn default_deployment_folder() -> PathBuf {
+    default_blog_path().join("public")
 }
