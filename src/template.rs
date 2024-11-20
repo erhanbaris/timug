@@ -1,6 +1,7 @@
-use std::{fs::File, io::Write};
+use std::{fs::File, io::Write, path::PathBuf};
 
 use colored::Colorize;
+use minify_html::minify;
 use minijinja::{context, path_loader, Environment};
 
 use crate::{context::TimugContext, post::Post};
@@ -34,7 +35,7 @@ pub fn parse_posts(context: &mut TimugContext) -> anyhow::Result<()> {
     let paths = std::fs::read_dir(&context.posts_path)?;
 
     for path in paths.flatten() {
-        if let Some(filename) = path.path().file_name().and_then(|f| f.to_str()) {
+        if let Some(filename) = path.path().file_name().and_then(|name| name.to_str()) {
             if filename.to_lowercase().ends_with(".md") {
                 let post = Post::load_from_path(context, filename)?;
                 context.posts.push(post);
@@ -53,45 +54,73 @@ pub fn parse_posts(context: &mut TimugContext) -> anyhow::Result<()> {
 }
 
 pub fn generate_posts(env: &mut Environment<'_>, context: &mut TimugContext) -> anyhow::Result<()> {
-    for post in context.posts.iter() {
-        let template = env.get_template(POST_HTML)?;
-        let content = template
-            .render(context!(config => context.config, post => post))
-            .unwrap();
+    let deployment_folder = context
+        .config
+        .blog_path
+        .join(&context.config.deployment_folder);
 
-        let file_path = context
-            .config
-            .blog_path
-            .join(context.config.deployment_folder.join(&post.lang));
-        std::fs::create_dir_all(&file_path)?;
-        let mut file = File::create(file_path.join(format!("{}.html", post.slug)))?;
-        file.write_all(content.as_bytes())?;
-        println!(
-            "{}: {}",
-            "Generated".green(),
-            file_path.join(format!("{}.html", post.slug)).display()
-        );
+    let mut created_paths = Vec::new();
+    let mut generate_path = |path: &PathBuf| -> anyhow::Result<()> {
+        if !created_paths.contains(path) {
+            std::fs::create_dir_all(path)?;
+            created_paths.push(path.clone());
+        }
+
+        Ok(())
+    };
+
+    for post in context.posts.iter() {
+        if post.draft {
+            continue;
+        }
+
+        let file_path = deployment_folder.join(&post.lang);
+        let file_name = file_path.join(format!("{}.html", post.slug));
+
+        let template = env.get_template(POST_HTML)?;
+        let content = template.render(context!(config => context.config, post => post))?;
+        generate_path(&file_path)?;
+        compress_and_write(content, &file_name)?;
+
+        println!("{}: {}", "Generated".green(), file_name.display());
     }
 
+    Ok(())
+}
+
+pub fn generate_posts_page(
+    env: &mut Environment<'_>,
+    context: &mut TimugContext,
+) -> anyhow::Result<()> {
     let template = env.get_template(POSTS_HTML)?;
-    let content = template
-        .render(context!(config => context.config, posts => context.posts))
-        .unwrap();
+    let content = template.render(context!(config => context.config, posts => context.posts))?;
 
     let file_path = context
         .config
         .blog_path
         .join(context.config.deployment_folder.clone());
-    std::fs::create_dir_all(&file_path)?;
-    let mut file = File::create(file_path.join("posts.html"))?;
-    file.write_all(content.as_bytes())?;
-    println!(
-        "{}: {}",
-        "Generated".green(),
-        file_path.join("posts.html").display()
-    );
+    let file_name = file_path.join(POSTS_HTML);
+
+    compress_and_write(content, &file_name)?;
+    println!("{}: {}", "Generated".green(), file_name.display());
 
     Ok(())
+}
+
+fn compress_html(content: String) -> Vec<u8> {
+    let cfg = minify_html::Cfg {
+        minify_css: true,
+        minify_js: true,
+        do_not_minify_doctype: true,
+        ..Default::default()
+    };
+    minify(content.as_bytes(), &cfg)
+}
+
+fn compress_and_write(content: String, path: &PathBuf) -> anyhow::Result<()> {
+    let mut file = File::create(path)?;
+    let content = compress_html(content);
+    Ok(file.write_all(&content)?)
 }
 
 #[cfg(test)]

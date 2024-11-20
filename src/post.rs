@@ -29,6 +29,9 @@ pub struct Post {
 
     #[serde(default)]
     pub lang: String,
+
+    #[serde(default)]
+    pub draft: bool,
 }
 
 pub mod date_format {

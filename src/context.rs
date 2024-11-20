@@ -36,7 +36,7 @@ impl TimugContext {
             config,
             templates_path,
             posts_path,
-            posts: vec![],
+            posts: Vec::new(),
         }
     }
 
