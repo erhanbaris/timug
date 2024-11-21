@@ -4,7 +4,7 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Default, PartialEq, Serialize, Deserialize)]
 pub struct TimugConfig {
-    pub name: String,
+    pub title: String,
     pub description: String,
 
     #[serde(default = "default_blog_path")]
@@ -21,8 +21,8 @@ pub struct TimugConfig {
 
     #[serde(default)]
     pub site_url: String,
-    pub author_name: String,
-    pub author_email: String,
+    pub author: String,
+    pub email: String,
 }
 
 fn default_blog_path() -> PathBuf {

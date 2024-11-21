@@ -51,15 +51,12 @@ fn post_url(lang: String, slug: String, state: &State) -> Result<Value, Error> {
         }
     };
 
-    return Ok(Value::from_safe_string(
-        format!(
-            "/{}/{}/{}/{}/{}.html",
-            lang,
-            post.date.year(),
-            post.date.month(),
-            post.date.day(),
-            slug
-        )
-        .into(),
-    ));
+    Ok(Value::from_safe_string(format!(
+        "/{}/{}/{}/{}/{}.html",
+        lang,
+        post.date.year(),
+        post.date.month(),
+        post.date.day(),
+        slug
+    )))
 }

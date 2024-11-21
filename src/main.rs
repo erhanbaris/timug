@@ -4,9 +4,9 @@ mod error;
 mod filters;
 mod functions;
 mod globals;
+mod pages;
 mod post;
 mod posts;
-mod pages;
 mod template;
 
 use anyhow::Result;
@@ -15,7 +15,10 @@ use filters::build_filters;
 use functions::build_functions;
 use globals::build_globals;
 use minijinja::Environment;
-use template::{build_base_templates, generate_page, generate_pages, generate_posts, generate_posts_page, parse_pages, parse_posts, INDEX_HTML, POSTS_HTML};
+use template::{
+    build_base_templates, generate_base_pages, generate_pages, generate_posts, parse_pages,
+    parse_posts,
+};
 
 fn main() -> Result<()> {
     let mut context = TimugContext::build(None);
@@ -25,13 +28,14 @@ fn main() -> Result<()> {
     build_filters(&mut env);
     build_globals(&mut env, &mut context);
     build_functions(&mut env);
+
     parse_posts(&mut context)?;
-    parse_pages(&mut context)?;
+    parse_pages(&mut env, &mut context)?;
+
     generate_pages(&mut env, &mut context)?;
     generate_posts(&mut env, &mut context)?;
-    generate_posts_page(&mut env, &mut context)?;
-    generate_page(&mut env, &mut context, INDEX_HTML)?;
-    generate_page(&mut env, &mut context, POSTS_HTML)?;
+
+    generate_base_pages(&mut env, &mut context)?;
 
     Ok(())
 }

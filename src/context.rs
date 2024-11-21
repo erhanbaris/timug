@@ -16,7 +16,7 @@ pub struct TimugContext {
     pub posts_path: PathBuf,
     pub pages_path: PathBuf,
     pub posts: Posts,
-    pub pages: Posts,
+    pub pages: Vec<String>,
 }
 
 impl TimugContext {
@@ -50,33 +50,18 @@ impl TimugContext {
         config.blog_path.join(name)
     }
 
-    pub fn get_template_file_path(&self, name: &str) -> PathBuf {
-        self.templates_path.join(name)
-    }
-
-    pub fn get_post_file_path(&self, name: &str) -> PathBuf {
-        self.posts_path.join(name)
-    }
-
     pub fn get_templates_path(&self) -> PathBuf {
         self.templates_path.clone()
     }
 
-    pub fn get_template_file_content(&self, name: &str) -> Result<String, TimugError> {
-        match std::fs::read_to_string(self.get_template_file_path(name)) {
+    pub fn get_file_content(&self, path: &PathBuf) -> Result<String, TimugError> {
+        match std::fs::read_to_string(path) {
             Ok(content) => Ok(content),
             Err(error) => Err(TimugError::FileNotFound(
-                name.to_string(),
-                error.to_string(),
-            )),
-        }
-    }
-
-    pub fn get_blog_file_content(&self, name: &str) -> Result<String, TimugError> {
-        match std::fs::read_to_string(self.get_post_file_path(name)) {
-            Ok(content) => Ok(content),
-            Err(error) => Err(TimugError::FileNotFound(
-                name.to_string(),
+                path.file_name()
+                    .unwrap_or_default()
+                    .to_string_lossy()
+                    .to_string(),
                 error.to_string(),
             )),
         }

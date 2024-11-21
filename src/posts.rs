@@ -3,7 +3,8 @@ use std::sync::Arc;
 use minijinja::{
     value::{Enumerator, Object},
     Value,
-};use serde::{Deserialize, Serialize};
+};
+use serde::{Deserialize, Serialize};
 
 use crate::post::Post;
 

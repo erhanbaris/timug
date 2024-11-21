@@ -1,10 +1,10 @@
-use std::sync::Arc;
+use std::{
+    path::{Path, PathBuf},
+    sync::Arc,
+};
 
 use chrono::{DateTime, Utc};
-use minijinja::{
-    value::Object,
-    Value,
-};
+use minijinja::{value::Object, Value};
 use pulldown_cmark::{Event, Options, Tag, TagEnd};
 use serde::{Deserialize, Serialize};
 
@@ -27,12 +27,6 @@ pub struct Post {
 
     #[serde(default)]
     pub tags: Vec<String>,
-
-    #[serde(default)]
-    pub author_name: String,
-
-    #[serde(default)]
-    pub author_email: String,
 
     #[serde(default)]
     pub lang: String,
@@ -60,21 +54,22 @@ pub mod date_format {
         D: Deserializer<'de>,
     {
         let s = String::deserialize(deserializer)?;
-        let dt = NaiveDateTime::parse_from_str(&s, DATE_FORMAT).map_err(serde::de::Error::custom)?;
+        let dt =
+            NaiveDateTime::parse_from_str(&s, DATE_FORMAT).map_err(serde::de::Error::custom)?;
         Ok(DateTime::<Utc>::from_naive_utc_and_offset(dt, Utc))
     }
 }
 
 impl Post {
-    pub fn load_from_path(context: &TimugContext, path: &str) -> Result<Self, TimugError> {
-        let content: String = context.get_blog_file_content(path)?;
+    pub fn load_from_path(context: &TimugContext, path: &PathBuf) -> Result<Self, TimugError> {
+        let content: String = context.get_file_content(path)?;
         Self::load_from_str(context, &content, path)
     }
 
     pub fn load_from_str(
         context: &TimugContext,
         content: &str,
-        path: &str,
+        path: &Path,
     ) -> Result<Self, TimugError> {
         let mut opts = Options::all();
         opts.insert(Options::ENABLE_YAML_STYLE_METADATA_BLOCKS);
@@ -105,23 +100,24 @@ impl Post {
             }
         }
 
-        let mut post: Post = serde_yaml::from_str(&metadata)
-            .unwrap_or_else(|_| panic!("Failed to parse post metadata information ({})", path));
-
-        if post.author_name.is_empty() {
-            post.author_name = context.config.author_name.clone();
-        }
-
-        if post.author_email.is_empty() {
-            post.author_email = context.config.author_email.clone();
-        }
+        let mut post: Post = serde_yaml::from_str(&metadata).unwrap_or_else(|_| {
+            panic!(
+                "Failed to parse post metadata information ({})",
+                path.display()
+            )
+        });
 
         if post.lang.is_empty() {
             post.lang = context.config.lang.clone();
         }
 
         if post.slug.is_empty() {
-            post.slug = path.to_lowercase().replace(".md", "");
+            post.slug = path
+                .file_name()
+                .unwrap_or_default()
+                .to_string_lossy()
+                .to_lowercase()
+                .replace(".md", "");
         }
 
         pulldown_cmark::html::push_html(&mut post.content, body_items.into_iter());
@@ -138,8 +134,6 @@ impl Object for Post {
             "date" => Some(Value::from(self.date.format(DATE_FORMAT).to_string())),
             "slug" => Some(Value::from(&self.slug)),
             "tags" => Some(Value::from(self.tags.clone())),
-            "author_name" => Some(Value::from(&self.author_name)),
-            "author_email" => Some(Value::from(&self.author_email)),
             "lang" => Some(Value::from(&self.lang)),
             "draft" => Some(Value::from(self.draft)),
             _ => None,
@@ -154,8 +148,8 @@ mod tests {
     fn setup_context() -> TimugContext {
         TimugContext {
             config: crate::config::TimugConfig {
-                author_name: "Default Author".to_string(),
-                author_email: "author@example.com".to_string(),
+                author: "Default Author".to_string(),
+                email: "author@example.com".to_string(),
                 lang: "en".to_string(),
                 ..Default::default()
             },
