@@ -1,12 +1,21 @@
 {% extends "base.html" %}
 {% block body %}
-<article
-  class="mx-20 my-20 px-20 py-20 divide-y divide-slate-400/20 rounded-lg bg-white text-[0.8125rem] leading-5 text-slate-900 shadow-xl shadow-black/5 ring-1 ring-slate-700/10">
-  <div class="w-full mx-auto space-y-4 text-center">
-    {%- for post in posts %}
-    <p class="text-xs font-semibold tracking-wider uppercase">{{ post.title -}}</p>
-    {% endfor %}
-
-  </div>
+<article class="columns is-centered">
+  <table class="table is-centered">
+    <tbody>
+      {%- for post in posts %}
+      <tr>
+        <td>
+          <p> {{ post.date | formatdatetime("%B %d, %Y") }}</p>
+        </td>
+        <td>
+          <a href="{{ post_url(post.lang, post.slug) }}" class="text-xs font-semibold tracking-wider uppercase">
+            #{{ post.title -}}
+          </a>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
 </article>
 {% endblock %}

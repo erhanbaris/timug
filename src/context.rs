@@ -2,10 +2,11 @@ use std::path::PathBuf;
 
 use colored::Colorize;
 
-use crate::{config::TimugConfig, error::TimugError, post::Post};
+use crate::{config::TimugConfig, error::TimugError, posts::Posts};
 
 const TEMPLATES_PATH: &str = "templates";
 const POSTS_PATH: &str = "posts";
+const PAGES_PATH: &str = "pages";
 const CONFIG_FILE_NAME: &str = "timug.yaml";
 
 #[derive(Debug, Default)]
@@ -13,7 +14,9 @@ pub struct TimugContext {
     pub config: TimugConfig,
     pub templates_path: PathBuf,
     pub posts_path: PathBuf,
-    pub posts: Vec<Post>,
+    pub pages_path: PathBuf,
+    pub posts: Posts,
+    pub pages: Posts,
 }
 
 impl TimugContext {
@@ -31,12 +34,15 @@ impl TimugContext {
 
         let templates_path = Self::get_path(&config, TEMPLATES_PATH).join(config.theme.clone());
         let posts_path = Self::get_path(&config, POSTS_PATH);
+        let pages_path = Self::get_path(&config, PAGES_PATH);
 
         Self {
             config,
             templates_path,
             posts_path,
-            posts: Vec::new(),
+            pages_path,
+            posts: Default::default(),
+            pages: Default::default(),
         }
     }
 

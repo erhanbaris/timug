@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+{% block body %}
+
+<div class="content">
+    <h1 class="columns is-centered column is-full">Posts</h1>
+    <table class="columns is-centered column is-full table is-centered">
+      <tbody>
+        {%- for post in posts %}
+        <tr>
+          <td>
+            <p> {{ post.date | formatdatetime("%B %d, %Y") }}</p>
+          </td>
+          <td>
+            <a href="{{ post_url(post.lang, post.slug) }}" class="text-xs font-semibold tracking-wider uppercase">
+              #{{ post.title -}}
+            </a>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+</div>
+{% endblock %}

@@ -1,10 +1,17 @@
+use std::sync::Arc;
+
 use chrono::{DateTime, Utc};
+use minijinja::{
+    value::Object,
+    Value,
+};
 use pulldown_cmark::{Event, Options, Tag, TagEnd};
 use serde::{Deserialize, Serialize};
 
 use crate::{context::TimugContext, error::TimugError};
+const DATE_FORMAT: &str = "%Y-%m-%d %H:%M:%S";
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Post {
     #[serde(default)]
     pub title: String,
@@ -13,7 +20,7 @@ pub struct Post {
     pub content: String,
 
     #[serde(default, with = "date_format")]
-    pub date: Option<DateTime<Utc>>,
+    pub date: DateTime<Utc>,
 
     #[serde(default)]
     pub slug: String,
@@ -38,23 +45,23 @@ pub mod date_format {
     use chrono::{DateTime, NaiveDateTime, Utc};
     use serde::{self, Deserialize, Deserializer, Serializer};
 
-    const FORMAT: &str = "%Y-%m-%d %H:%M:%S";
+    use super::DATE_FORMAT;
 
-    pub fn serialize<S>(date: &Option<DateTime<Utc>>, serializer: S) -> Result<S::Ok, S::Error>
+    pub fn serialize<S>(date: &DateTime<Utc>, serializer: S) -> Result<S::Ok, S::Error>
     where
         S: Serializer,
     {
-        let s = format!("{}", date.unwrap_or_default().format(FORMAT));
+        let s = format!("{}", date.format(DATE_FORMAT));
         serializer.serialize_str(&s)
     }
 
-    pub fn deserialize<'de, D>(deserializer: D) -> Result<Option<DateTime<Utc>>, D::Error>
+    pub fn deserialize<'de, D>(deserializer: D) -> Result<DateTime<Utc>, D::Error>
     where
         D: Deserializer<'de>,
     {
         let s = String::deserialize(deserializer)?;
-        let dt = NaiveDateTime::parse_from_str(&s, FORMAT).map_err(serde::de::Error::custom)?;
-        Ok(Some(DateTime::<Utc>::from_naive_utc_and_offset(dt, Utc)))
+        let dt = NaiveDateTime::parse_from_str(&s, DATE_FORMAT).map_err(serde::de::Error::custom)?;
+        Ok(DateTime::<Utc>::from_naive_utc_and_offset(dt, Utc))
     }
 }
 
@@ -122,6 +129,24 @@ impl Post {
     }
 }
 
+impl Object for Post {
+    fn get_value(self: &Arc<Self>, key: &Value) -> Option<Value> {
+        let key = key.as_str()?;
+        match key {
+            "title" => Some(Value::from(&self.title)),
+            "content" => Some(Value::from(&self.content)),
+            "date" => Some(Value::from(self.date.format(DATE_FORMAT).to_string())),
+            "slug" => Some(Value::from(&self.slug)),
+            "tags" => Some(Value::from(self.tags.clone())),
+            "author_name" => Some(Value::from(&self.author_name)),
+            "author_email" => Some(Value::from(&self.author_email)),
+            "lang" => Some(Value::from(&self.lang)),
+            "draft" => Some(Value::from(self.draft)),
+            _ => None,
+        }
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -155,7 +180,7 @@ This is the content of the post.
         let post = Post::load_from_str(&context, content, path).expect("Failed to load post");
 
         assert_eq!(post.title, "Test Post");
-        assert_eq!(post.date.unwrap().to_string(), "2023-10-01 12:00:00 UTC");
+        assert_eq!(post.date.to_string(), "2023-10-01 12:00:00 UTC");
         assert_eq!(post.tags, vec!["rust", "programming"]);
         assert_eq!(post.content, "<p>This is the content of the post.</p>\n");
     }
@@ -169,7 +194,6 @@ This is the content of the post.
         let post = Post::load_from_str(&context, content, path).expect("Failed to load post");
 
         assert_eq!(post.title, "");
-        assert!(post.date.is_none());
         assert!(post.tags.is_empty());
         assert_eq!(post.content, "<p>This is the content of the post.</p>\n");
         assert_eq!(post.author_name, "Default Author");
@@ -191,7 +215,6 @@ This is the content of the post.
         let post = Post::load_from_str(&context, content, path).expect("Failed to load post");
 
         assert_eq!(post.title, "Test Post");
-        assert!(post.date.is_none());
         assert!(post.tags.is_empty());
         assert_eq!(post.content, "<p>This is the content of the post.</p>\n");
         assert_eq!(post.author_name, "Default Author");

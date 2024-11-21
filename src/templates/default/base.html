@@ -10,49 +10,7 @@
     {% block metas %}{% endblock %}
     {% block links %}{% endblock %}
     {% block scripts %}{% endblock %}
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    colors: {
-                        clifford: '#da373d',
-                    }
-                }
-            }
-        }
-    </script>
-    <style type="text/tailwindcss">
-        @tailwind base;
-        @tailwind components;
-        @tailwind utilities;
-
-        @layer utilities {
-          .content-auto {
-            content-visibility: auto;
-          }
-        }
-        @layer components {
-            .btn-blue {
-                @apply relative w-full py-3 px-3 hover:shadow-lg hover:ring-4 ring-[#24292F] ring-offset-2 inline-flex justify-center items-center gap-x-2 text-lg font-sans font-thin rounded-lg border border-transparent bg-gradient-to-r from-[#24292F] to-[#24292F]/90 text-white disabled:opacity-50 disabled:pointer-events-none transition ease-in-out duration-300;
-            }
-
-            h1 {
-                @apply text-gray-900 font-bold text-4xl;
-            }
-            h2 {
-                @apply text-gray-900 font-bold text-2xl;
-            }
-            p {
-                @apply text-base leading-8 my-5;
-            }
-            ol {
-                @apply list-decimal ml-10 text-base leading-8 my-5;
-            }
-        }
-
-
-      </style>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@1.0.2/css/bulma.min.css">
 </head>
 
 <body>

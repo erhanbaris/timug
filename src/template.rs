@@ -1,20 +1,23 @@
 use std::{fs::File, io::Write, path::PathBuf};
 
+use chrono::Datelike;
 use colored::Colorize;
 use minify_html::minify;
-use minijinja::{context, path_loader, Environment};
+use minijinja::{context, path_loader, Environment, Value};
 
 use crate::{context::TimugContext, post::Post};
 const BASE_HTML: &str = "base.html";
+pub const INDEX_HTML: &str = "index.html";
 const FOOTER_HTML: &str = "footer.html";
 const HEADER_HTML: &str = "header.html";
 const POST_HTML: &str = "post.html";
-const POSTS_HTML: &str = "posts.html";
+pub const POSTS_HTML: &str = "posts.html";
 
 pub fn build_base_templates(
     env: &mut Environment<'_>,
     context: &TimugContext,
 ) -> anyhow::Result<()> {
+    let index = context.get_template_file_content(INDEX_HTML)?;
     let base = context.get_template_file_content(BASE_HTML)?;
     let footer = context.get_template_file_content(FOOTER_HTML)?;
     let header = context.get_template_file_content(HEADER_HTML)?;
@@ -22,6 +25,7 @@ pub fn build_base_templates(
     let posts = context.get_template_file_content(POSTS_HTML)?;
 
     env.set_loader(path_loader(context.get_templates_path()));
+    env.add_template_owned(INDEX_HTML, index)?;
     env.add_template_owned(HEADER_HTML, header)?;
     env.add_template_owned(FOOTER_HTML, footer)?;
     env.add_template_owned(BASE_HTML, base)?;
@@ -38,7 +42,7 @@ pub fn parse_posts(context: &mut TimugContext) -> anyhow::Result<()> {
         if let Some(filename) = path.path().file_name().and_then(|name| name.to_str()) {
             if filename.to_lowercase().ends_with(".md") {
                 let post = Post::load_from_path(context, filename)?;
-                context.posts.push(post);
+                context.posts.items.push(post);
                 println!("{}: {}", "Parsed".green(), filename);
             }
         } else {
@@ -48,6 +52,30 @@ pub fn parse_posts(context: &mut TimugContext) -> anyhow::Result<()> {
 
     context
         .posts
+        .items
+        .sort_unstable_by_key(|item| (item.date, item.slug.clone()));
+
+    Ok(())
+}
+
+pub fn parse_pages(context: &mut TimugContext) -> anyhow::Result<()> {
+    let paths = std::fs::read_dir(&context.pages_path)?;
+
+    for path in paths.flatten() {
+        if let Some(filename) = path.path().file_name().and_then(|name| name.to_str()) {
+            if filename.to_lowercase().ends_with(".html") {
+                let post = Post::load_from_path(context, filename)?;
+                context.pages.items.push(post);
+                println!("{}: {}", "Parsed".green(), filename);
+            }
+        } else {
+            println!("Path name could not parsed ({})", path.path().display());
+        }
+    }
+
+    context
+        .pages
+        .items
         .sort_unstable_by_key(|item| (item.date, item.slug.clone()));
 
     Ok(())
@@ -69,12 +97,16 @@ pub fn generate_posts(env: &mut Environment<'_>, context: &mut TimugContext) -> 
         Ok(())
     };
 
-    for post in context.posts.iter() {
+    for post in context.posts.items.iter() {
         if post.draft {
             continue;
         }
 
-        let file_path = deployment_folder.join(&post.lang);
+        let file_path = deployment_folder
+            .join(&post.lang)
+            .join(post.date.year().to_string())
+            .join(post.date.month().to_string())
+            .join(post.date.day().to_string());
         let file_name = file_path.join(format!("{}.html", post.slug));
 
         let template = env.get_template(POST_HTML)?;
@@ -88,18 +120,57 @@ pub fn generate_posts(env: &mut Environment<'_>, context: &mut TimugContext) -> 
     Ok(())
 }
 
+pub fn generate_pages(env: &mut Environment<'_>, context: &mut TimugContext) -> anyhow::Result<()> {
+    let deployment_folder = context
+        .config
+        .blog_path
+        .join(&context.config.deployment_folder);
+
+    for page in context.pages.items.iter() {
+        if page.draft {
+            continue;
+        }
+
+        let file_name = deployment_folder.join(format!("{}.html", page.slug));
+
+        let template = env.get_template(POST_HTML)?;
+        let content = template.render(context!(config => context.config, page => page))?;
+        compress_and_write(content, &file_name)?;
+
+        println!("{}: {}", "Generated".green(), file_name.display());
+    }
+
+    Ok(())
+}
+
 pub fn generate_posts_page(
     env: &mut Environment<'_>,
     context: &mut TimugContext,
 ) -> anyhow::Result<()> {
     let template = env.get_template(POSTS_HTML)?;
-    let content = template.render(context!(config => context.config, posts => context.posts))?;
+    let content = template.render(context!(config => context.config, posts => Value::from_object(context.posts.clone())))?;
 
     let file_path = context
         .config
         .blog_path
         .join(context.config.deployment_folder.clone());
     let file_name = file_path.join(POSTS_HTML);
+
+    compress_and_write(content, &file_name)?;
+    println!("{}: {}", "Generated".green(), file_name.display());
+
+    Ok(())
+}
+
+pub fn generate_page(env: &mut Environment<'_>, context: &mut TimugContext, page_name: &str) -> anyhow::Result<()> {
+    let template = env.get_template(page_name)?;
+    let content = template.render(context!(config => context.config, posts => Value::from_object(context.posts.clone())))?;
+
+    let file_path = context
+        .config
+        .blog_path
+        .join(context.config.deployment_folder.clone());
+    let file_name = file_path.join(page_name);
 
     compress_and_write(content, &file_name)?;
     println!("{}: {}", "Generated".green(), file_name.display());
@@ -220,8 +291,8 @@ title: Test Post
         ));
         let result = parse_posts(&mut context);
         assert!(result.is_ok());
-        assert_eq!(context.posts.len(), 1);
-        assert_eq!(context.posts[0].title, "Test Post");
+        assert_eq!(context.posts.items.len(), 1);
+        assert_eq!(context.posts.items[0].title, "Test Post");
     }
 
     #[test]
