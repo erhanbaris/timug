@@ -5,10 +5,12 @@ use std::{
 
 use chrono::{DateTime, Utc};
 use minijinja::{value::Object, Value};
-use pulldown_cmark::{Event, Options, Tag, TagEnd};
 use serde::{Deserialize, Serialize};
 
-use crate::{context::TimugContext, error::TimugError};
+use crate::{
+    error::TimugError,
+    tools::{get_file_content, parse_yaml},
+};
 const DATE_FORMAT: &str = "%Y-%m-%d %H:%M:%S";
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -27,9 +29,6 @@ pub struct Post {
 
     #[serde(default)]
     pub tags: Vec<String>,
-
-    #[serde(default)]
-    pub lang: String,
 
     #[serde(default)]
     pub draft: bool,
@@ -61,55 +60,19 @@ pub mod date_format {
 }
 
 impl Post {
-    pub fn load_from_path(context: &TimugContext, path: &PathBuf) -> Result<Self, TimugError> {
-        let content: String = context.get_file_content(path)?;
-        Self::load_from_str(context, &content, path)
+    pub fn load_from_path(path: &PathBuf) -> Result<Self, TimugError> {
+        let content: String = get_file_content(path)?;
+        Self::load_from_str(&content, path)
     }
 
-    pub fn load_from_str(
-        context: &TimugContext,
-        content: &str,
-        path: &Path,
-    ) -> Result<Self, TimugError> {
-        let mut opts = Options::all();
-        opts.insert(Options::ENABLE_YAML_STYLE_METADATA_BLOCKS);
-        opts.insert(Options::ENABLE_PLUSES_DELIMITED_METADATA_BLOCKS);
-
-        let parser = pulldown_cmark::Parser::new_ext(content, opts);
-        let mut metacontent_started = false;
-        let mut metadata = String::new();
-        let mut body_items = Vec::new();
-
-        for event in parser {
-            if let Event::Start(Tag::MetadataBlock(_)) = event {
-                metacontent_started = true;
-                continue;
-            }
-
-            if let Event::End(TagEnd::MetadataBlock(_)) = event {
-                metacontent_started = false;
-                continue;
-            }
-
-            if metacontent_started {
-                if let Event::Text(text) = event {
-                    metadata.push_str(&text);
-                }
-            } else {
-                body_items.push(event);
-            }
-        }
-
-        let mut post: Post = serde_yaml::from_str(&metadata).unwrap_or_else(|_| {
+    pub fn load_from_str(content: &str, path: &Path) -> Result<Self, TimugError> {
+        let yaml_data = parse_yaml(content);
+        let mut post: Post = serde_yaml::from_str(&yaml_data.metadata).unwrap_or_else(|_| {
             panic!(
                 "Failed to parse post metadata information ({})",
                 path.display()
             )
         });
-
-        if post.lang.is_empty() {
-            post.lang = context.config.lang.clone();
-        }
 
         if post.slug.is_empty() {
             post.slug = path
@@ -120,7 +83,12 @@ impl Post {
                 .replace(".md", "");
         }
 
-        pulldown_cmark::html::push_html(&mut post.content, body_items.into_iter());
+        //let mut buffer = String::new();
+        //cmark(body_items.iter(), &mut buffer).unwrap();
+
+        //println!("Buffer: {}", buffer);
+
+        pulldown_cmark::html::push_html(&mut post.content, yaml_data.body_items.into_iter());
         Ok(post)
     }
 }
@@ -134,7 +102,6 @@ impl Object for Post {
             "date" => Some(Value::from(self.date.format(DATE_FORMAT).to_string())),
             "slug" => Some(Value::from(&self.slug)),
             "tags" => Some(Value::from(self.tags.clone())),
-            "lang" => Some(Value::from(&self.lang)),
             "draft" => Some(Value::from(self.draft)),
             _ => None,
         }

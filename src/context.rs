@@ -2,7 +2,7 @@ use std::path::PathBuf;
 
 use colored::Colorize;
 
-use crate::{config::TimugConfig, error::TimugError, posts::Posts};
+use crate::config::TimugConfig;
 
 const TEMPLATES_PATH: &str = "templates";
 const POSTS_PATH: &str = "posts";
@@ -15,7 +15,6 @@ pub struct TimugContext {
     pub templates_path: PathBuf,
     pub posts_path: PathBuf,
     pub pages_path: PathBuf,
-    pub posts: Posts,
     pub pages: Vec<String>,
 }
 
@@ -41,29 +40,11 @@ impl TimugContext {
             templates_path,
             posts_path,
             pages_path,
-            posts: Default::default(),
             pages: Default::default(),
         }
     }
 
     fn get_path(config: &TimugConfig, name: &str) -> PathBuf {
         config.blog_path.join(name)
-    }
-
-    pub fn get_templates_path(&self) -> PathBuf {
-        self.templates_path.clone()
-    }
-
-    pub fn get_file_content(&self, path: &PathBuf) -> Result<String, TimugError> {
-        match std::fs::read_to_string(path) {
-            Ok(content) => Ok(content),
-            Err(error) => Err(TimugError::FileNotFound(
-                path.file_name()
-                    .unwrap_or_default()
-                    .to_string_lossy()
-                    .to_string(),
-                error.to_string(),
-            )),
-        }
     }
 }

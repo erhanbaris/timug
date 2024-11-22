@@ -1,16 +1,34 @@
-use std::sync::Arc;
+use std::{path::PathBuf, sync::Arc};
 
+use colored::Colorize;
 use minijinja::{
     value::{Enumerator, Object},
     Value,
 };
 use serde::{Deserialize, Serialize};
 
-use crate::post::Post;
+use crate::{post::Post, tools::get_files};
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 pub struct Posts {
     pub items: Vec<Post>,
+}
+
+impl Posts {
+    pub fn load(path: &PathBuf) -> anyhow::Result<Self> {
+        let mut items = Vec::new();
+        let files = get_files(path, "md")?;
+
+        for file in files {
+            let post = Post::load_from_path(&file)?;
+            items.push(post);
+            println!("{}: {}", "Parsed".green(), file.display());
+        }
+
+        items.sort_unstable_by_key(|item| (item.date, item.slug.clone())); // Todo: date should be descending
+
+        Ok(Self { items })
+    }
 }
 
 impl Object for Posts {

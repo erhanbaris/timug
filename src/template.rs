@@ -1,11 +1,14 @@
 use std::{fs::File, io::Write, path::PathBuf};
 
+use anyhow::{Context, Ok};
 use chrono::Datelike;
 use colored::Colorize;
 use minify_html::minify;
 use minijinja::{context, path_loader, Environment, Value};
 
-use crate::{context::TimugContext, post::Post};
+use crate::{
+    context::TimugContext, pages::Page, posts::Posts, tools::{get_file_content, get_file_name, get_files}
+};
 const BASE_HTML: &str = "base.html";
 pub const INDEX_HTML: &str = "index.html";
 const FOOTER_HTML: &str = "footer.html";
@@ -13,158 +16,185 @@ const HEADER_HTML: &str = "header.html";
 const POST_HTML: &str = "post.html";
 pub const POSTS_HTML: &str = "posts.html";
 
-pub fn build_base_templates(
-    env: &mut Environment<'_>,
-    context: &TimugContext,
-) -> anyhow::Result<()> {
-    let index = context.get_file_content(&context.templates_path.join(INDEX_HTML))?;
-    let base = context.get_file_content(&context.templates_path.join(BASE_HTML))?;
-    let footer = context.get_file_content(&context.templates_path.join(FOOTER_HTML))?;
-    let header = context.get_file_content(&context.templates_path.join(HEADER_HTML))?;
-    let post = context.get_file_content(&context.templates_path.join(POST_HTML))?;
-    let posts = context.get_file_content(&context.templates_path.join(POSTS_HTML))?;
-
-    env.set_loader(path_loader(context.get_templates_path()));
-    env.add_template_owned(INDEX_HTML, index)?;
-    env.add_template_owned(HEADER_HTML, header)?;
-    env.add_template_owned(FOOTER_HTML, footer)?;
-    env.add_template_owned(BASE_HTML, base)?;
-    env.add_template_owned(POST_HTML, post)?;
-    env.add_template_owned(POSTS_HTML, posts)?;
-
-    Ok(())
+pub struct RenderEngine<'a> {
+    pub env: Environment<'a>,
+    pub ctx: TimugContext,
+    posts_value: Value,
 }
 
-pub fn parse_posts(context: &mut TimugContext) -> anyhow::Result<()> {
-    let paths = std::fs::read_dir(&context.posts_path)?;
-
-    for path in paths.flatten() {
-        let file_name = path.file_name().to_string_lossy().to_string();
-        if file_name.to_lowercase().ends_with(".md") {
-            let post = Post::load_from_path(context, &path.path())?;
-            context.posts.items.push(post);
-            println!("{}: {}", "Parsed".green(), file_name);
+impl<'a> RenderEngine<'a> {
+    pub fn new(ctx: TimugContext) -> Self {
+        let env = Environment::new();
+        Self {
+            env,
+            ctx,
+            posts_value: Value::default(),
         }
     }
 
-    context
-        .posts
-        .items
-        .sort_unstable_by_key(|item| (item.date, item.slug.clone()));
+    pub fn run(&mut self) -> anyhow::Result<()> {
+        self.build_base_templates()?;
+        self.build_filters();
+        self.build_globals();
+        self.build_functions();
 
-    Ok(())
-}
-pub fn generate_base_pages(
-    env: &mut Environment<'_>,
-    context: &mut TimugContext,
-) -> anyhow::Result<()> {
-    generate_page(env, context, INDEX_HTML)?;
-    generate_page(env, context, POSTS_HTML)?;
-    Ok(())
-}
+        self.parse_posts()?;
+        self.parse_pages()?;
 
-pub fn parse_pages(env: &mut Environment<'_>, context: &mut TimugContext) -> anyhow::Result<()> {
-    let paths = std::fs::read_dir(&context.pages_path)?;
+        self.generate_pages()?;
+        self.generate_posts()?;
 
-    for path in paths.flatten() {
-        let file_name = path.file_name().to_string_lossy().to_string();
-        if file_name.to_lowercase().ends_with(".html") || file_name.to_lowercase().ends_with(".htm")
-        {
-            let content = context.get_file_content(&path.path())?;
-            env.add_template_owned(file_name.clone(), content)?;
+        self.generate_base_pages()?;
+
+        Ok(())
+    }
+
+    fn build_base_template(&mut self, name: &str) -> anyhow::Result<()> {
+        let content = get_file_content(&self.ctx.templates_path.join(name))?;
+        self.env.add_template_owned(name.to_string(), content)?;
+        Ok(())
+    }
+
+    pub fn build_globals(&mut self) {
+        let config = &self.ctx.config;
+        self.env.add_global("author_name", &config.author);
+        self.env.add_global("author_email", &config.email);
+        self.env.add_global("site_url", &config.site_url);
+        self.env.add_global("lang", &config.lang);
+        self.env.add_global("description", &config.description);
+        self.env.add_global("blog_name", &config.title);
+    }
+
+    pub fn build_base_templates(&mut self) -> anyhow::Result<()> {
+        let template_path = self.ctx.templates_path.clone();
+        self.env.set_loader(path_loader(template_path));
+        self.build_base_template(INDEX_HTML)?;
+        self.build_base_template(BASE_HTML)?;
+        self.build_base_template(FOOTER_HTML)?;
+        self.build_base_template(HEADER_HTML)?;
+        self.build_base_template(POST_HTML)?;
+        self.build_base_template(POSTS_HTML)?;
+
+        Ok(())
+    }
+
+    pub fn parse_posts(&mut self) -> anyhow::Result<()> {
+        let posts = Posts::load(&self.ctx.posts_path)?;
+        self.posts_value = Value::from_object(posts);
+        Ok(())
+    }
+
+    pub fn generate_base_pages(&mut self) -> anyhow::Result<()> {
+        self.generate_page(INDEX_HTML)?;
+        self.generate_page(POSTS_HTML)?;
+        Ok(())
+    }
+
+    pub fn parse_pages(&mut self) -> anyhow::Result<()> {
+        let files = get_files(&self.ctx.pages_path, "html")?;
+
+        for file in files {
+            let _page = Page::load_from_path(&file)?;
+
+            let content = get_file_content(&file)?;
+            let file_name = get_file_name(file)?;
+            self.env
+                .add_template_owned(file_name.to_string(), content)?;
 
             println!("{}: {}", "Parsed".green(), &file_name);
-            context.pages.push(file_name);
-        }
-    }
-
-    Ok(())
-}
-
-pub fn generate_posts(env: &mut Environment<'_>, context: &mut TimugContext) -> anyhow::Result<()> {
-    let deployment_folder = context
-        .config
-        .blog_path
-        .join(&context.config.deployment_folder);
-
-    let mut created_paths = Vec::new();
-    let mut generate_path = |path: &PathBuf| -> anyhow::Result<()> {
-        if !created_paths.contains(path) {
-            std::fs::create_dir_all(path)?;
-            created_paths.push(path.clone());
+            self.ctx.pages.push(file_name);
         }
 
         Ok(())
-    };
+    }
 
-    for post in context.posts.items.iter() {
-        if post.draft {
-            continue;
+    pub fn generate_posts(&mut self) -> anyhow::Result<()> {
+        let deployment_folder = self
+            .ctx
+            .config
+            .blog_path
+            .join(&self.ctx.config.deployment_folder);
+
+        let mut created_paths = Vec::new();
+        let mut generate_path = |path: &PathBuf| -> anyhow::Result<()> {
+            if !created_paths.contains(path) {
+                std::fs::create_dir_all(path)?;
+                created_paths.push(path.clone());
+            }
+
+            Ok(())
+        };
+
+        let posts = self
+            .posts_value
+            .as_object()
+            .and_then(|obj| obj.downcast_ref::<Posts>())
+            .context("'posts' is not a Posts type".to_string())?;
+
+        for post in posts.items.iter() {
+            if post.draft {
+                continue;
+            }
+
+            let file_path = deployment_folder
+                .join(post.date.year().to_string())
+                .join(post.date.month().to_string())
+                .join(post.date.day().to_string());
+            let file_name = file_path.join(format!("{}.html", post.slug));
+
+            let template = self.env.get_template(POST_HTML)?;
+            let content = template.render(context!(config => self.ctx.config, post => post))?;
+            generate_path(&file_path)?;
+            self.compress_and_write(content, &file_name)?;
+
+            println!("{}: {}", "Generated".green(), file_name.display());
         }
 
-        let file_path = deployment_folder
-            .join(&post.lang)
-            .join(post.date.year().to_string())
-            .join(post.date.month().to_string())
-            .join(post.date.day().to_string());
-        let file_name = file_path.join(format!("{}.html", post.slug));
+        Ok(())
+    }
 
-        let template = env.get_template(POST_HTML)?;
-        let content = template.render(context!(config => context.config, post => post))?;
-        generate_path(&file_path)?;
-        compress_and_write(content, &file_name)?;
+    pub fn generate_pages(&mut self) -> anyhow::Result<()> {
+        for page in self.ctx.pages.clone().iter() {
+            self.generate_page(page)?;
+            println!("{}: {}", "Generated".green(), &page);
+        }
 
+        Ok(())
+    }
+
+    pub fn generate_page(&mut self, page_name: &str) -> anyhow::Result<()> {
+        let template = self.env.get_template(page_name)?;
+        let content =
+            template.render(context!(config => self.ctx.config, posts => self.posts_value))?;
+
+        let file_path = self
+            .ctx
+            .config
+            .blog_path
+            .join(self.ctx.config.deployment_folder.clone());
+        let file_name = file_path.join(page_name);
+
+        self.compress_and_write(content, &file_name)?;
         println!("{}: {}", "Generated".green(), file_name.display());
+
+        Ok(())
     }
 
-    Ok(())
-}
-
-pub fn generate_pages(env: &mut Environment<'_>, context: &mut TimugContext) -> anyhow::Result<()> {
-    for page in context.pages.clone().iter() {
-        generate_page(env, context, page)?;
-        println!("{}: {}", "Generated".green(), &page);
+    fn compress_html(content: String) -> Vec<u8> {
+        let cfg = minify_html::Cfg {
+            minify_css: true,
+            minify_js: true,
+            do_not_minify_doctype: true,
+            ..Default::default()
+        };
+        minify(content.as_bytes(), &cfg)
     }
 
-    Ok(())
-}
-
-pub fn generate_page(
-    env: &mut Environment<'_>,
-    context: &mut TimugContext,
-    page_name: &str,
-) -> anyhow::Result<()> {
-    let template = env.get_template(page_name)?;
-    let content = template.render(
-        context!(config => context.config, posts => Value::from_object(context.posts.clone())),
-    )?;
-
-    let file_path = context
-        .config
-        .blog_path
-        .join(context.config.deployment_folder.clone());
-    let file_name = file_path.join(page_name);
-
-    compress_and_write(content, &file_name)?;
-    println!("{}: {}", "Generated".green(), file_name.display());
-
-    Ok(())
-}
-
-fn compress_html(content: String) -> Vec<u8> {
-    let cfg = minify_html::Cfg {
-        minify_css: true,
-        minify_js: true,
-        do_not_minify_doctype: true,
-        ..Default::default()
-    };
-    minify(content.as_bytes(), &cfg)
-}
-
-fn compress_and_write(content: String, path: &PathBuf) -> anyhow::Result<()> {
-    let mut file = File::create(path)?;
-    let content = compress_html(content);
-    Ok(file.write_all(&content)?)
+    fn compress_and_write(&self, content: String, path: &PathBuf) -> anyhow::Result<()> {
+        let mut file = File::create(path)?;
+        let content = Self::compress_html(content);
+        Ok(file.write_all(&content)?)
+    }
 }
 
 #[cfg(test)]
@@ -212,7 +242,7 @@ author_email: test@gmail.com
                 .unwrap()
                 .to_string(),
         ));
-        build_base_templates(&mut env, &context).unwrap();
+        self.build_base_templates(&mut env, &context).unwrap();
     }
 
     #[test]
@@ -320,7 +350,7 @@ title: Test Post
         build_base_templates(&mut env, &context).unwrap();
         parse_posts(&mut context).unwrap();
 
-        generate_posts(&mut env, &mut context).unwrap();
+        generate_posts().unwrap();
 
         let file_path = context
             .config
