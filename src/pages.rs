@@ -1,18 +1,26 @@
-use std::{path::{Path, PathBuf}, sync::Arc};
+use std::{
+    path::{Path, PathBuf},
+    sync::Arc,
+};
 
 use minijinja::{
     value::{Enumerator, Object},
     Value,
 };
-use pulldown_cmark_to_cmark::cmark;
 use serde::{Deserialize, Serialize};
 
-use crate::tools::{get_file_content, get_file_name, parse_yaml};
+use crate::tools::{get_file_content, get_file_name, yaml_front_matter};
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 pub struct Page {
     #[serde(default)]
     pub title: String,
+    
+    #[serde(skip)]
+    pub file_name: String,
+    
+    #[serde(skip)]
+    pub path: PathBuf,
 
     #[serde(default)]
     pub slug: String,
@@ -24,7 +32,6 @@ pub struct Page {
     pub content: String,
 }
 
-
 impl Page {
     pub fn load_from_path(path: &PathBuf) -> anyhow::Result<Self> {
         let content: String = get_file_content(path)?;
@@ -32,16 +39,22 @@ impl Page {
     }
 
     pub fn load_from_str(content: &str, path: &Path) -> anyhow::Result<Self> {
-        let yaml_data = parse_yaml(content);
-        let mut page: Page = serde_yaml::from_str(&yaml_data.metadata).unwrap_or_else(|error| {
-            panic!(
-                "Failed to parse page metadata information ({}, {:?})",
-                path.display(), error
-            )
-        });
+        let front_matter = yaml_front_matter(content);
+
+        let mut page: Page = serde_yaml::from_str(front_matter.metadata.unwrap_or_default())
+            .unwrap_or_else(|error| {
+                panic!(
+                    "Failed to parse page metadata information ({}, {:?})",
+                    path.display(),
+                    error
+                )
+            });
+
+        page.content = front_matter.content.to_string();
+        page.file_name = get_file_name(path)?;
 
         if page.title.is_empty() {
-            page.title = get_file_name(path.to_path_buf())?;
+            page.title = page.file_name.clone();
         }
 
         if page.slug.is_empty() {
@@ -52,14 +65,9 @@ impl Page {
                 .to_lowercase()
                 .replace(".html", "");
         }
-
-        let mut buffer = String::new();
-        cmark(yaml_data.body_items.into_iter(), &mut buffer)?;
-
         Ok(page)
     }
 }
-
 
 impl Object for Page {
     fn get_value(self: &Arc<Self>, key: &Value) -> Option<Value> {

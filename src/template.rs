@@ -7,7 +7,10 @@ use minify_html::minify;
 use minijinja::{context, path_loader, Environment, Value};
 
 use crate::{
-    context::TimugContext, pages::Page, posts::Posts, tools::{get_file_content, get_file_name, get_files}
+    context::TimugContext,
+    pages::Page,
+    posts::Posts,
+    tools::{get_file_content, get_files},
 };
 const BASE_HTML: &str = "base.html";
 pub const INDEX_HTML: &str = "index.html";
@@ -94,15 +97,9 @@ impl<'a> RenderEngine<'a> {
         let files = get_files(&self.ctx.pages_path, "html")?;
 
         for file in files {
-            let _page = Page::load_from_path(&file)?;
-
-            let content = get_file_content(&file)?;
-            let file_name = get_file_name(file)?;
-            self.env
-                .add_template_owned(file_name.to_string(), content)?;
-
-            println!("{}: {}", "Parsed".green(), &file_name);
-            self.ctx.pages.push(file_name);
+            let page = Page::load_from_path(&file)?;
+            println!("{}: {}", "Parsed".green(), &page.file_name);
+            self.ctx.pages.push(page);
         }
 
         Ok(())
@@ -155,8 +152,8 @@ impl<'a> RenderEngine<'a> {
 
     pub fn generate_pages(&mut self) -> anyhow::Result<()> {
         for page in self.ctx.pages.clone().iter() {
-            self.generate_page(page)?;
-            println!("{}: {}", "Generated".green(), &page);
+            //self.generate_page(page)?;
+            println!("{}: {}", "Generated".green(), &page.path.display());
         }
 
         Ok(())

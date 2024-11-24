@@ -1,11 +1,11 @@
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 
 use anyhow::Context;
 use pulldown_cmark::{Event, Options, Tag, TagEnd};
 
 use crate::error::TimugError;
 
-pub fn get_file_name(path: PathBuf) -> anyhow::Result<String> {
+pub fn get_file_name(path: &Path) -> anyhow::Result<String> {
     Ok(path
         .file_name()
         .context("Could not convert to string")?
@@ -84,5 +84,48 @@ pub fn parse_yaml(content: &'_ str) -> YamlData<'_> {
     YamlData {
         metadata,
         body_items,
+    }
+}
+
+#[derive(Debug)]
+pub struct FrontMatterInfo<'a> {
+    pub metadata: Option<&'a str>,
+    pub content: &'a str,
+}
+
+pub fn yaml_front_matter(content: &'_ str) -> FrontMatterInfo<'_> {
+    let mut front_matter_started = false;
+    let mut front_matter_found = false;
+    let mut front_matter_start_position = 0;
+    let mut front_matter_end_position = 0;
+    let mut content_start_position = 0;
+    let mut start = 0;
+
+    for (index, ch) in content.chars().enumerate() {
+        if ch == '\n' {
+            if content[start..index].trim() == "---" && front_matter_started {
+                front_matter_end_position = start;
+                content_start_position = index + 1;
+                front_matter_found = true;
+                break;
+            } else if content[start..index].trim() == "---" && !front_matter_started {
+                front_matter_started = true;
+                front_matter_start_position = index + 1;
+            }
+
+            start = index;
+        }
+    }
+
+    if front_matter_found {
+        FrontMatterInfo {
+            metadata: Some(&content[front_matter_start_position..front_matter_end_position]),
+            content: &content[content_start_position..],
+        }
+    } else {
+        FrontMatterInfo {
+            metadata: None,
+            content,
+        }
     }
 }
