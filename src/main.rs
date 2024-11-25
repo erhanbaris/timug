@@ -3,6 +3,7 @@ mod context;
 mod error;
 mod filters;
 mod functions;
+mod page;
 mod pages;
 mod post;
 mod posts;

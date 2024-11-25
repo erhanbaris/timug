@@ -2,7 +2,7 @@ use std::path::PathBuf;
 
 use colored::Colorize;
 
-use crate::{config::TimugConfig, pages::Page};
+use crate::config::TimugConfig;
 
 const TEMPLATES_PATH: &str = "templates";
 const POSTS_PATH: &str = "posts";
@@ -15,7 +15,6 @@ pub struct TimugContext {
     pub templates_path: PathBuf,
     pub posts_path: PathBuf,
     pub pages_path: PathBuf,
-    pub pages: Vec<Page>,
 }
 
 impl TimugContext {
@@ -40,7 +39,6 @@ impl TimugContext {
             templates_path,
             posts_path,
             pages_path,
-            pages: Default::default(),
         }
     }
 

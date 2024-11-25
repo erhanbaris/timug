@@ -1,4 +1,9 @@
-<section class="section">
-    <a href="/">Home</a>
-    <a href="/posts.html">Posts</a>
-  </section>
+<div class="navbar-menu is-centered">
+  <div class="navbar-start">
+    {%- for page in pages %}
+      {% if page.render %}
+        <a href="{{ page_url(page.slug) }}" class="navbar-item">{{ page.title }}</a>
+      {% endif %}
+    {% endfor %}
+  </div>
+</div>

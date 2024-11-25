@@ -37,10 +37,7 @@ pub fn get_file_content(path: &PathBuf) -> Result<String, TimugError> {
     match std::fs::read_to_string(path) {
         Ok(content) => Ok(content),
         Err(error) => Err(TimugError::FileNotFound(
-            path.file_name()
-                .unwrap_or_default()
-                .to_string_lossy()
-                .to_string(),
+            path.to_string_lossy().to_string(),
             error.to_string(),
         )),
     }

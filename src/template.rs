@@ -8,21 +8,15 @@ use minijinja::{context, path_loader, Environment, Value};
 
 use crate::{
     context::TimugContext,
-    pages::Page,
+    pages::{Pages, POST_HTML},
     posts::Posts,
-    tools::{get_file_content, get_files},
 };
-const BASE_HTML: &str = "base.html";
-pub const INDEX_HTML: &str = "index.html";
-const FOOTER_HTML: &str = "footer.html";
-const HEADER_HTML: &str = "header.html";
-const POST_HTML: &str = "post.html";
-pub const POSTS_HTML: &str = "posts.html";
 
 pub struct RenderEngine<'a> {
     pub env: Environment<'a>,
     pub ctx: TimugContext,
     posts_value: Value,
+    pages_value: Value,
 }
 
 impl<'a> RenderEngine<'a> {
@@ -32,11 +26,13 @@ impl<'a> RenderEngine<'a> {
             env,
             ctx,
             posts_value: Value::default(),
+            pages_value: Value::default(),
         }
     }
 
     pub fn run(&mut self) -> anyhow::Result<()> {
-        self.build_base_templates()?;
+        self.env
+            .set_loader(path_loader(self.ctx.templates_path.clone()));
         self.build_filters();
         self.build_globals();
         self.build_functions();
@@ -47,14 +43,6 @@ impl<'a> RenderEngine<'a> {
         self.generate_pages()?;
         self.generate_posts()?;
 
-        self.generate_base_pages()?;
-
-        Ok(())
-    }
-
-    fn build_base_template(&mut self, name: &str) -> anyhow::Result<()> {
-        let content = get_file_content(&self.ctx.templates_path.join(name))?;
-        self.env.add_template_owned(name.to_string(), content)?;
         Ok(())
     }
 
@@ -68,40 +56,22 @@ impl<'a> RenderEngine<'a> {
         self.env.add_global("blog_name", &config.title);
     }
 
-    pub fn build_base_templates(&mut self) -> anyhow::Result<()> {
-        let template_path = self.ctx.templates_path.clone();
-        self.env.set_loader(path_loader(template_path));
-        self.build_base_template(INDEX_HTML)?;
-        self.build_base_template(BASE_HTML)?;
-        self.build_base_template(FOOTER_HTML)?;
-        self.build_base_template(HEADER_HTML)?;
-        self.build_base_template(POST_HTML)?;
-        self.build_base_template(POSTS_HTML)?;
-
-        Ok(())
-    }
-
     pub fn parse_posts(&mut self) -> anyhow::Result<()> {
         let posts = Posts::load(&self.ctx.posts_path)?;
         self.posts_value = Value::from_object(posts);
         Ok(())
     }
 
-    pub fn generate_base_pages(&mut self) -> anyhow::Result<()> {
-        self.generate_page(INDEX_HTML)?;
-        self.generate_page(POSTS_HTML)?;
-        Ok(())
-    }
-
     pub fn parse_pages(&mut self) -> anyhow::Result<()> {
-        let files = get_files(&self.ctx.pages_path, "html")?;
+        let mut pages = Pages::default();
+        pages.load_base_pages(&self.ctx.templates_path)?;
+        pages.load_custom_pages(&self.ctx.pages_path)?;
 
-        for file in files {
-            let page = Page::load_from_path(&file)?;
-            println!("{}: {}", "Parsed".green(), &page.file_name);
-            self.ctx.pages.push(page);
+        for page in pages.items.iter() {
+            self.env
+                .add_template_owned(page.path.clone(), page.content.clone())?;
         }
-
+        self.pages_value = Value::from_object(pages);
         Ok(())
     }
 
@@ -140,7 +110,7 @@ impl<'a> RenderEngine<'a> {
             let file_name = file_path.join(format!("{}.html", post.slug));
 
             let template = self.env.get_template(POST_HTML)?;
-            let content = template.render(context!(config => self.ctx.config, post => post))?;
+            let content = template.render(context!(config => self.ctx.config, post => post, posts => self.posts_value, pages => self.pages_value, active_page => "posts"))?;
             generate_path(&file_path)?;
             self.compress_and_write(content, &file_name)?;
 
@@ -151,9 +121,30 @@ impl<'a> RenderEngine<'a> {
     }
 
     pub fn generate_pages(&mut self) -> anyhow::Result<()> {
-        for page in self.ctx.pages.clone().iter() {
-            //self.generate_page(page)?;
-            println!("{}: {}", "Generated".green(), &page.path.display());
+        let pages = self
+            .pages_value
+            .as_object()
+            .and_then(|obj| obj.downcast_ref::<Pages>())
+            .context("'pages' is not a Pages type".to_string())?;
+
+        for page in pages.items.iter() {
+            if !page.render {
+                continue;
+            }
+
+            let template = self.env.get_template(&page.path)?;
+            println!("{}: {}", "Rendering".yellow(), page.path);
+            let content = template.render(context!(config => self.ctx.config, posts => self.posts_value, pages => self.pages_value, active_page => page))?;
+
+            let file_path = self
+                .ctx
+                .config
+                .blog_path
+                .join(self.ctx.config.deployment_folder.clone());
+            let file_name = file_path.join(&page.file_name);
+
+            self.compress_and_write(content, &file_name)?;
+            println!("{}: {}", "Generated".green(), file_name.display());
         }
 
         Ok(())
@@ -161,8 +152,7 @@ impl<'a> RenderEngine<'a> {
 
     pub fn generate_page(&mut self, page_name: &str) -> anyhow::Result<()> {
         let template = self.env.get_template(page_name)?;
-        let content =
-            template.render(context!(config => self.ctx.config, posts => self.posts_value))?;
+        let content = template.render(context!(config => self.ctx.config, posts => self.posts_value, pages => self.pages_value))?;
 
         let file_path = self
             .ctx

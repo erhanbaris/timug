@@ -1,0 +1,10 @@
+[build]
+
+# To enable tokio console
+# rustflags = ["--cfg", "tokio_unstable"]
+
+# Default flags
+rustflags = []
+
+[env]
+RUST_BACKTRACE = "1"

@@ -1,12 +1,13 @@
 use chrono::Datelike;
 use minijinja::{Error, ErrorKind, State, Value};
 
-use crate::{posts::Posts, template::RenderEngine};
+use crate::{pages::Pages, posts::Posts, template::RenderEngine};
 
 impl<'a> RenderEngine<'a> {
     pub fn build_functions(&mut self) {
         self.env.add_function("current_year", Self::current_year);
         self.env.add_function("post_url", Self::post_url);
+        self.env.add_function("page_url", Self::page_url);
     }
 
     fn current_year() -> Result<Value, Error> {
@@ -55,5 +56,42 @@ impl<'a> RenderEngine<'a> {
             post.date.day(),
             slug
         )))
+    }
+
+    fn page_url(slug: String, state: &State) -> Result<Value, Error> {
+        let pages = match state.lookup("pages") {
+            Some(pages) => pages,
+            None => {
+                return Err(Error::new(
+                    ErrorKind::UndefinedError,
+                    "'pages' not found".to_string(),
+                ))
+            }
+        };
+
+        let pages = match pages
+            .as_object()
+            .and_then(|obj| obj.downcast_ref::<Pages>())
+        {
+            Some(pages) => pages,
+            None => {
+                return Err(Error::new(
+                    ErrorKind::UndefinedError,
+                    "'pages' is not a Posts type".to_string(),
+                ))
+            }
+        };
+
+        let page = match pages.items.iter().find(|page| page.slug == slug) {
+            Some(page) => page,
+            None => {
+                return Err(Error::new(
+                    ErrorKind::UndefinedError,
+                    format!("Page (slug: '{}') could not found", slug),
+                ))
+            }
+        };
+
+        Ok(Value::from_safe_string(format!("/{}.html", page.slug)))
     }
 }
