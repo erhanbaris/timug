@@ -1,6 +1,10 @@
-use std::{fs::File, io::Write, path::PathBuf};
+use std::{
+    fs::File,
+    io::Write,
+    path::{Path, PathBuf},
+};
 
-use anyhow::{Context, Ok};
+use anyhow::Context;
 use chrono::Datelike;
 use colored::Colorize;
 use minify_html::minify;
@@ -42,6 +46,8 @@ impl<'a> RenderEngine<'a> {
 
         self.generate_pages()?;
         self.generate_posts()?;
+
+        self.move_statics()?;
 
         Ok(())
     }
@@ -120,6 +126,27 @@ impl<'a> RenderEngine<'a> {
         Ok(())
     }
 
+    fn copy_dir_all(src: impl AsRef<Path>, dst: impl AsRef<Path>) -> std::io::Result<()> {
+        std::fs::create_dir_all(&dst)?;
+        for entry in std::fs::read_dir(src)? {
+            let entry = entry?;
+            let ty = entry.file_type()?;
+            if ty.is_dir() {
+                Self::copy_dir_all(entry.path(), dst.as_ref().join(entry.file_name()))?;
+            } else {
+                std::fs::copy(entry.path(), dst.as_ref().join(entry.file_name()))?;
+            }
+        }
+        Ok(())
+    }
+
+    pub fn move_statics(&mut self) -> anyhow::Result<()> {
+        Ok(Self::copy_dir_all(
+            &self.ctx.statics_path,
+            &self.ctx.config.deployment_folder,
+        )?)
+    }
+
     pub fn generate_pages(&mut self) -> anyhow::Result<()> {
         let pages = self
             .pages_value
@@ -146,23 +173,6 @@ impl<'a> RenderEngine<'a> {
             self.compress_and_write(content, &file_name)?;
             println!("{}: {}", "Generated".green(), file_name.display());
         }
-
-        Ok(())
-    }
-
-    pub fn generate_page(&mut self, page_name: &str) -> anyhow::Result<()> {
-        let template = self.env.get_template(page_name)?;
-        let content = template.render(context!(config => self.ctx.config, posts => self.posts_value, pages => self.pages_value))?;
-
-        let file_path = self
-            .ctx
-            .config
-            .blog_path
-            .join(self.ctx.config.deployment_folder.clone());
-        let file_name = file_path.join(page_name);
-
-        self.compress_and_write(content, &file_name)?;
-        println!("{}: {}", "Generated".green(), file_name.display());
 
         Ok(())
     }

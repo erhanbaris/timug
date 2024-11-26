@@ -1,4 +1,5 @@
 use std::{
+    collections::HashMap,
     path::{Path, PathBuf},
     sync::Arc,
 };
@@ -30,6 +31,9 @@ pub struct Page {
 
     #[serde(default)]
     pub render: bool,
+
+    #[serde(flatten)]
+    other: HashMap<String, serde_yaml::value::Value>,
 }
 
 impl Page {
@@ -69,9 +73,33 @@ impl Page {
     }
 }
 
+fn from(value: &serde_yaml::Value) -> minijinja::Value {
+    match value {
+        serde_yaml::Value::Null => minijinja::Value::UNDEFINED,
+        serde_yaml::Value::Bool(val) => minijinja::Value::from(*val),
+        serde_yaml::Value::Number(val) => minijinja::Value::from(val.as_f64()),
+        serde_yaml::Value::String(val) => minijinja::Value::from(val),
+        serde_yaml::Value::Sequence(vec) => {
+            minijinja::Value::from(vec.iter().map(from).collect::<Vec<_>>())
+        }
+        serde_yaml::Value::Mapping(mapping) => minijinja::Value::from(
+            mapping
+                .into_iter()
+                .map(|(key, value)| (key.as_str().unwrap_or_default().to_string(), from(value)))
+                .collect::<HashMap<_, _>>(),
+        ),
+        serde_yaml::Value::Tagged(_) => minijinja::Value::UNDEFINED,
+    }
+}
+
 impl Object for Page {
     fn get_value(self: &Arc<Self>, key: &Value) -> Option<Value> {
         let key = key.as_str()?;
+
+        if let Some(value) = self.other.get(key) {
+            return Some(from(value));
+        }
+
         match key {
             "title" => Some(Value::from(&self.title)),
             "slug" => Some(Value::from(&self.slug)),

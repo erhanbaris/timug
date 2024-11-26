@@ -7,6 +7,7 @@ use crate::config::TimugConfig;
 const TEMPLATES_PATH: &str = "templates";
 const POSTS_PATH: &str = "posts";
 const PAGES_PATH: &str = "pages";
+const STATICS_PATH: &str = "statics";
 const CONFIG_FILE_NAME: &str = "timug.yaml";
 
 #[derive(Debug, Default)]
@@ -15,6 +16,7 @@ pub struct TimugContext {
     pub templates_path: PathBuf,
     pub posts_path: PathBuf,
     pub pages_path: PathBuf,
+    pub statics_path: PathBuf,
 }
 
 impl TimugContext {
@@ -33,12 +35,14 @@ impl TimugContext {
         let templates_path = Self::get_path(&config, TEMPLATES_PATH).join(config.theme.clone());
         let posts_path = Self::get_path(&config, POSTS_PATH);
         let pages_path = Self::get_path(&config, PAGES_PATH);
+        let statics_path = Self::get_path(&config, STATICS_PATH);
 
         Self {
             config,
             templates_path,
             posts_path,
             pages_path,
+            statics_path,
         }
     }
 

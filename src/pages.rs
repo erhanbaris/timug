@@ -1,4 +1,7 @@
-use std::{path::PathBuf, sync::Arc};
+use std::{
+    path::{Path, PathBuf},
+    sync::Arc,
+};
 
 use colored::Colorize;
 use minijinja::{
@@ -22,7 +25,7 @@ pub struct Pages {
 }
 
 impl Pages {
-    pub fn load_base_pages(&mut self, template_path: &PathBuf) -> anyhow::Result<()> {
+    pub fn load_base_pages(&mut self, template_path: &Path) -> anyhow::Result<()> {
         self.build_base_template(template_path, INDEX_HTML, true)?;
         self.build_base_template(template_path, BASE_HTML, false)?;
         self.build_base_template(template_path, FOOTER_HTML, false)?;
@@ -38,7 +41,7 @@ impl Pages {
 
     fn build_base_template(
         &mut self,
-        templates_path: &PathBuf,
+        templates_path: &Path,
         name: &str,
         render: bool,
     ) -> anyhow::Result<()> {
