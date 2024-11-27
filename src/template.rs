@@ -109,6 +109,8 @@ impl<'a> RenderEngine<'a> {
                 continue;
             }
 
+            let context = context!(config => self.ctx.config, post => post, posts => self.posts_value, pages => self.pages_value, active_page => "posts");
+
             let file_path = deployment_folder
                 .join(post.date.year().to_string())
                 .join(post.date.month().to_string())
@@ -116,7 +118,13 @@ impl<'a> RenderEngine<'a> {
             let file_name = file_path.join(format!("{}.html", post.slug));
 
             let template = self.env.get_template(POST_HTML)?;
-            let content = template.render(context!(config => self.ctx.config, post => post, posts => self.posts_value, pages => self.pages_value, active_page => "posts"))?;
+
+            if post.content.contains("{%") {
+                let compiled = self.env.render_str(&post.content, &context)?;
+                println!("{}: {}", "Compiled".yellow(), compiled);
+            }
+
+            let content = template.render(context)?;
             generate_path(&file_path)?;
             self.compress_and_write(content, &file_name)?;
 
