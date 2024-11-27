@@ -7,7 +7,7 @@ use std::{
 use minijinja::{value::Object, Value};
 use serde::{Deserialize, Serialize};
 
-use crate::tools::{get_file_content, get_file_name, yaml_front_matter};
+use crate::tools::{get_file_content, get_file_name, get_path, yaml_front_matter};
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 pub struct Page {
@@ -56,18 +56,14 @@ impl Page {
 
         page.content = front_matter.content.to_string();
         page.file_name = get_file_name(path)?;
+        page.path = get_path(path)?;
 
         if page.title.is_empty() {
             page.title = page.file_name.clone();
         }
 
         if page.slug.is_empty() {
-            page.slug = path
-                .file_name()
-                .unwrap_or_default()
-                .to_string_lossy()
-                .to_lowercase()
-                .replace(".html", "");
+            page.slug = page.file_name.replace(".html", "");
         }
         Ok(page)
     }

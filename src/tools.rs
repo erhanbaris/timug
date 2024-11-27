@@ -14,6 +14,13 @@ pub fn get_file_name(path: &Path) -> anyhow::Result<String> {
         .to_lowercase())
 }
 
+pub fn get_path(path: &Path) -> anyhow::Result<String> {
+    Ok(path
+        .to_str()
+        .context("Could not convert to string")?
+        .to_string())
+}
+
 pub fn get_files(path: &PathBuf, extension: &str) -> anyhow::Result<Vec<PathBuf>> {
     let paths = std::fs::read_dir(path)?
         .flatten()

@@ -1,6 +1,7 @@
 mod config;
 mod context;
 mod error;
+mod extensions;
 mod filters;
 mod functions;
 mod page;

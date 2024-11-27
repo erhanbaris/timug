@@ -12,6 +12,7 @@ use minijinja::{context, path_loader, Environment, Value};
 
 use crate::{
     context::TimugContext,
+    extensions::quote,
     pages::{Pages, POST_HTML},
     posts::Posts,
 };
@@ -60,6 +61,8 @@ impl<'a> RenderEngine<'a> {
         self.env.add_global("lang", &config.lang);
         self.env.add_global("description", &config.description);
         self.env.add_global("blog_name", &config.title);
+        self.env
+            .add_global("quote", Value::from_object(quote::Quote::new()));
     }
 
     pub fn parse_posts(&mut self) -> anyhow::Result<()> {
@@ -109,7 +112,7 @@ impl<'a> RenderEngine<'a> {
                 continue;
             }
 
-            let context = context!(config => self.ctx.config, post => post, posts => self.posts_value, pages => self.pages_value, active_page => "posts");
+            let mut post = post.clone();
 
             let file_path = deployment_folder
                 .join(post.date.year().to_string())
@@ -117,13 +120,16 @@ impl<'a> RenderEngine<'a> {
                 .join(post.date.day().to_string());
             let file_name = file_path.join(format!("{}.html", post.slug));
 
-            let template = self.env.get_template(POST_HTML)?;
+            println!("{}: {}", "Compiling".yellow(), post.slug);
 
             if post.content.contains("{%") {
-                let compiled = self.env.render_str(&post.content, &context)?;
-                println!("{}: {}", "Compiled".yellow(), compiled);
+                let context = context!(config => self.ctx.config, post => post, posts => self.posts_value, pages => self.pages_value, active_page => "posts");
+                let content = self.env.render_str(&post.content, &context)?;
+                post.content = content;
             }
 
+            let template = self.env.get_template(POST_HTML)?;
+            let context = context!(config => self.ctx.config, post => post, posts => self.posts_value, pages => self.pages_value, active_page => "posts");
             let content = template.render(context)?;
             generate_path(&file_path)?;
             self.compress_and_write(content, &file_name)?;

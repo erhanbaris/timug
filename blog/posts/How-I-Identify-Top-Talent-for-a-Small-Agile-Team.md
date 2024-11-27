@@ -12,9 +12,9 @@ We usually make small adjustments to a ready template and publish the ad. After 
 
 ## So what are these criterias - 1?
 
-{% alertbox note %}
+{% call quote() %}
 "Details matter. It’s worth waiting to get it right." — Steve Jobs
-{% endalertbox %}
+{% endcall %}
 
 1. A clear and well-organized CV is essential. It doesn’t need to be professionally designed, but it should highlight key strengths without overwhelming the reviewer. Some CVs are so complicated that I cannot focus on the points I should focus on.
 2. Demonstrating passion and commitment to the field is crucial. Studying in a school does not make you good at that subject. It also does not indicate that you really want to do that job. What matters is how eager you are for this profession.
@@ -25,9 +25,9 @@ These are just the criterias to pass the first stage. After that, I send tests t
 
 ## So what are these criterias - 2?
 
-{% alertbox note %}
+{% call quote() %}
 "Any fool can write code that a computer can understand. Good programmers write code that humans can understand." — Martin Fowler
-{% endalertbox %}
+{% endcall %}
 
 
 1. Ensuring that the code successfully passes all Unit Tests is a priority. Our testing tool automatically runs predefined Unit Tests and displays the results.
@@ -40,9 +40,9 @@ Based on test results, we invite shortlisted candidates for interviews—ideally
 ## So what are these criterias - 3?
 
 
-{% alertbox note %}
+{% call quote() %}
 "Hire character. Train skill." — Peter Schutz
-{% endalertbox %}
+{% endcall %}
 
 
 1. Did the candidate take the time to research our company and the role beforehand? It is normal to apply to many different places during the job search process, and often people apply for jobs that are outside of their interests or skills. But I think it is important for people who come to the job interview to do some research beforehand.
@@ -52,9 +52,9 @@ Based on test results, we invite shortlisted candidates for interviews—ideally
 
 There are many criterias here, but each criterion can sometimes take precedence over another criterion. This may vary depending on the person, how urgently we are looking for a new employee, and the status of other criterias. 
 
-{% alertbox note %}
+{% call quote() %}
 "The only way to do great work is to love what you do." — Steve Jobs
-{% endalertbox %}
+{% endcall %}
 
 I have never examined any resumes so far, and I have never looked at which school they went to, which department they graduated from, or what score they received. These only show how good they are in the education system. However, they do not reflect who they really are or what they can do. In fact, I have even sent tests and interviewed people who were very enthusiastic but had no work experience and no training in this field. Therefore, understanding one’s shortcomings and striving for improvement is essential.
 

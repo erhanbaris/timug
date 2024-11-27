@@ -18,6 +18,7 @@ const FOOTER_HTML: &str = "footer.html";
 const HEADER_HTML: &str = "header.html";
 pub const POST_HTML: &str = "post.html";
 const POSTS_HTML: &str = "posts.html";
+pub const QUOTE_HTML: &str = "quote.html";
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 pub struct Pages {
@@ -32,6 +33,7 @@ impl Pages {
         self.build_base_template(template_path, HEADER_HTML, false)?;
         self.build_base_template(template_path, POST_HTML, false)?;
         self.build_base_template(template_path, POSTS_HTML, true)?;
+        self.build_base_template(template_path, QUOTE_HTML, true)?;
 
         self.items
             .sort_unstable_by_key(|item| (item.title.clone(), item.slug.clone()));
@@ -47,7 +49,6 @@ impl Pages {
     ) -> anyhow::Result<()> {
         let file = templates_path.join(name);
         let mut page = Page::load_from_path(&file)?;
-        page.path = file.to_str().unwrap_or_default().to_string();
         page.render = page.render || render;
         self.items.push(page);
         println!("{}: {}", "Parsed".green(), file.display());
