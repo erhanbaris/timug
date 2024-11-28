@@ -28,19 +28,13 @@ impl Object for Quote {
     }
 
     fn call(self: &Arc<Self>, state: &State<'_, '_>, args: &[Value]) -> Result<Value, Error> {
-        let (args, kwargs): (&[Value], Kwargs) = from_args(args)?;
-        let mut position = "center".to_string();
+        let (position, kwargs): (Option<&str>, Kwargs) = from_args(args)?;
 
-        if let Some(position_usize) = args.get(0)
-            .and_then(|value| value.as_usize())
-        {
-            position = match position_usize {
-                1 => "left".to_string(),
-                2 => "center".to_string(),
-                3 => "right".to_string(),
-                _ => "center".to_string(),
-            };
-        }
+        let position = match position {
+            Some("left") => "left".to_string(),
+            Some("right") => "right".to_string(),
+            _ => "center".to_string(),
+        };
 
         let caller: Value = kwargs.get("caller")?;
         let content = caller.call(state, args!())?;

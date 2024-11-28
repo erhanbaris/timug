@@ -57,9 +57,12 @@ pub struct YamlData<'a> {
 
 pub fn parse_yaml(content: &'_ str) -> YamlData<'_> {
     let mut heading_indexer = 0;
-    let mut opts = Options::all();
+    let mut opts = Options::empty();
     opts.insert(Options::ENABLE_YAML_STYLE_METADATA_BLOCKS);
     opts.insert(Options::ENABLE_PLUSES_DELIMITED_METADATA_BLOCKS);
+    opts.insert(Options::ENABLE_HEADING_ATTRIBUTES);
+    opts.insert(Options::ENABLE_TABLES);
+    opts.insert(Options::ENABLE_FOOTNOTES);
 
     let parser = pulldown_cmark::Parser::new_ext(content, opts);
     let mut metacontent_started = false;
