@@ -33,7 +33,7 @@ impl Pages {
         self.build_base_template(template_path, HEADER_HTML, false)?;
         self.build_base_template(template_path, POST_HTML, false)?;
         self.build_base_template(template_path, POSTS_HTML, true)?;
-        self.build_base_template(template_path, QUOTE_HTML, true)?;
+        self.build_base_template(template_path, QUOTE_HTML, false)?;
 
         self.items
             .sort_unstable_by_key(|item| (item.title.clone(), item.slug.clone()));
@@ -66,7 +66,7 @@ impl Pages {
         }
 
         self.items
-            .sort_unstable_by_key(|item| (item.title.clone(), item.slug.clone()));
+            .sort_unstable_by_key(|item| (item.order.clone(), item.title.clone()));
 
         Ok(())
     }

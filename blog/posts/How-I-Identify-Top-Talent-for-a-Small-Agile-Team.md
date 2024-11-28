@@ -12,8 +12,10 @@ We usually make small adjustments to a ready template and publish the ad. After 
 
 ## So what are these criterias - 1?
 
-{% call quote() %}
-"Details matter. It’s worth waiting to get it right." — Steve Jobs
+{% call quote(3) %}
+"Details matter. It’s worth waiting to get it right."
+<br>
+Steve Jobs
 {% endcall %}
 
 1. A clear and well-organized CV is essential. It doesn’t need to be professionally designed, but it should highlight key strengths without overwhelming the reviewer. Some CVs are so complicated that I cannot focus on the points I should focus on.
@@ -25,8 +27,10 @@ These are just the criterias to pass the first stage. After that, I send tests t
 
 ## So what are these criterias - 2?
 
-{% call quote() %}
-"Any fool can write code that a computer can understand. Good programmers write code that humans can understand." — Martin Fowler
+{% call quote(3) %}
+"Any fool can write code that a computer can understand. Good programmers write code that humans can understand."
+<br>
+Martin Fowler
 {% endcall %}
 
 
@@ -40,8 +44,10 @@ Based on test results, we invite shortlisted candidates for interviews—ideally
 ## So what are these criterias - 3?
 
 
-{% call quote() %}
-"Hire character. Train skill." — Peter Schutz
+{% call quote(3) %}
+"Hire character. Train skill."
+<br>
+Peter Schutz
 {% endcall %}
 
 
@@ -52,8 +58,10 @@ Based on test results, we invite shortlisted candidates for interviews—ideally
 
 There are many criterias here, but each criterion can sometimes take precedence over another criterion. This may vary depending on the person, how urgently we are looking for a new employee, and the status of other criterias. 
 
-{% call quote() %}
-"The only way to do great work is to love what you do." — Steve Jobs
+{% call quote(3) %}
+"The only way to do great work is to love what you do."
+<br>
+Steve Jobs
 {% endcall %}
 
 I have never examined any resumes so far, and I have never looked at which school they went to, which department they graduated from, or what score they received. These only show how good they are in the education system. However, they do not reflect who they really are or what they can do. In fact, I have even sent tests and interviewed people who were very enthusiastic but had no work experience and no training in this field. Therefore, understanding one’s shortcomings and striving for improvement is essential.

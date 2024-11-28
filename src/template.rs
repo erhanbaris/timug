@@ -48,7 +48,7 @@ impl<'a> RenderEngine<'a> {
         self.generate_pages()?;
         self.generate_posts()?;
 
-        self.move_statics()?;
+        //self.move_statics()?;
 
         Ok(())
     }

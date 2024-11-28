@@ -56,6 +56,7 @@ pub struct YamlData<'a> {
 }
 
 pub fn parse_yaml(content: &'_ str) -> YamlData<'_> {
+    let mut heading_indexer = 0;
     let mut opts = Options::all();
     opts.insert(Options::ENABLE_YAML_STYLE_METADATA_BLOCKS);
     opts.insert(Options::ENABLE_PLUSES_DELIMITED_METADATA_BLOCKS);
@@ -65,15 +66,33 @@ pub fn parse_yaml(content: &'_ str) -> YamlData<'_> {
     let mut metadata = String::new();
     let mut body_items = Vec::new();
 
-    for event in parser {
-        if let Event::Start(Tag::MetadataBlock(_)) = event {
-            metacontent_started = true;
-            continue;
-        }
-
-        if let Event::End(TagEnd::MetadataBlock(_)) = event {
-            metacontent_started = false;
-            continue;
+    for event in parser.into_iter() {
+        match event {
+            Event::Start(Tag::MetadataBlock(_)) => {
+                metacontent_started = true;
+                continue;
+            }
+            Event::Start(Tag::Heading {
+                level,
+                id: _,
+                classes,
+                attrs,
+            }) => {
+                let id = Some(format!("heading-{}", heading_indexer).into());
+                heading_indexer += 1;
+                body_items.push(Event::Start(Tag::Heading {
+                    level,
+                    id,
+                    classes,
+                    attrs,
+                }));
+                continue;
+            }
+            Event::End(TagEnd::MetadataBlock(_)) => {
+                metacontent_started = false;
+                continue;
+            }
+            _ => {}
         }
 
         if metacontent_started {

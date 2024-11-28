@@ -83,11 +83,6 @@ impl Post {
                 .replace(".md", "");
         }
 
-        //let mut buffer = String::new();
-        //cmark(body_items.iter(), &mut buffer).unwrap();
-
-        //println!("Buffer: {}", buffer);
-
         pulldown_cmark::html::push_html(&mut post.content, yaml_data.body_items.into_iter());
         Ok(post)
     }

@@ -1,5 +1,6 @@
 ---
 title: Home
+order: 0
 ---
 
 {% extends "base.html" %}
@@ -7,7 +8,7 @@ title: Home
 
 <div class="content">
     <h1 class="columns is-centered column is-full">Posts</h1>
-    <table class="columns is-centered column is-full table is-centered">
+    <table class="table-auto">
       <tbody>
         {%- for post in posts %}
         <tr>

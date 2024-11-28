@@ -3,6 +3,6 @@ description: Erhan Baris's Blog
 language: tr
 theme: default
 deployment_folder: public
-blog_path: /Users/erhanbaris/ClionProjects/timug/blog/
+blog_path: C:\codes\timug\blog\
 author: Erhan Baris
 email: erhanbaris@gmail.com
