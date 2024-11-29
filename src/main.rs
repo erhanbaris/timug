@@ -12,13 +12,11 @@ mod template;
 mod tools;
 
 use anyhow::Result;
-use context::TimugContext;
 
 use template::RenderEngine;
 
 fn main() -> Result<()> {
-    let context = TimugContext::build(None);
-    let mut engine = RenderEngine::new(context);
+    let mut engine = RenderEngine::new();
     engine.run()?;
     Ok(())
 }

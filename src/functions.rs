@@ -39,7 +39,7 @@ impl<'a> RenderEngine<'a> {
             }
         };
 
-        let post = match posts.items.iter().find(|post| post.slug == slug) {
+        let post = match posts.items.iter().find(|post| post.slug() == slug) {
             Some(post) => post,
             None => {
                 return Err(Error::new(
@@ -49,11 +49,12 @@ impl<'a> RenderEngine<'a> {
             }
         };
 
+        let date = post.date();
         Ok(Value::from_safe_string(format!(
             "/{}/{}/{}/{}.html",
-            post.date.year(),
-            post.date.month(),
-            post.date.day(),
+            date.year(),
+            date.month(),
+            date.day(),
             slug
         )))
     }

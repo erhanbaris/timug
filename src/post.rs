@@ -9,12 +9,17 @@ use serde::{Deserialize, Serialize};
 
 use crate::{
     error::TimugError,
-    tools::{get_file_content, parse_yaml},
+    tools::{get_file_content, yaml_front_matter},
 };
 const DATE_FORMAT: &str = "%Y-%m-%d %H:%M:%S";
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Post {
+    inner: Arc<InnerPost>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+struct InnerPost {
     #[serde(default)]
     pub title: String,
 
@@ -66,13 +71,14 @@ impl Post {
     }
 
     pub fn load_from_str(content: &str, path: &Path) -> Result<Self, TimugError> {
-        let yaml_data = parse_yaml(content);
-        let mut post: Post = serde_yaml::from_str(&yaml_data.metadata).unwrap_or_else(|_| {
-            panic!(
-                "Failed to parse post metadata information ({})",
-                path.display()
-            )
-        });
+        let front_matter = yaml_front_matter(content);
+        let mut post: InnerPost = serde_yaml::from_str(front_matter.metadata.unwrap_or_default())
+            .unwrap_or_else(|_| {
+                panic!(
+                    "Failed to parse post metadata information ({})",
+                    path.display()
+                )
+            });
 
         if post.slug.is_empty() {
             post.slug = path
@@ -83,21 +89,50 @@ impl Post {
                 .replace(".md", "");
         }
 
-        pulldown_cmark::html::push_html(&mut post.content, yaml_data.body_items.into_iter());
-        Ok(post)
+        post.content = front_matter.content.to_string();
+        Ok(Post { inner: Arc::new(post) })
     }
+
+    pub fn title(&self) -> &str {
+        &self.inner.title
+    }
+
+    pub fn content(&self) -> &str {
+        &self.inner.content
+    }
+
+    pub fn set_content(&mut self, content: String) {
+        (*Arc::make_mut(&mut self.inner)).content = content;
+    }
+
+    pub fn slug(&self) -> &str {
+        &self.inner.slug
+    }
+
+    pub fn draft(&self) -> bool {
+        self.inner.draft
+    }
+
+    pub fn date(&self) -> DateTime<Utc> {
+        self.inner.date.clone()
+    }
+
+    pub fn tags(&self) -> Vec<String> {
+        self.inner.tags.clone()
+    }
+    
 }
 
 impl Object for Post {
     fn get_value(self: &Arc<Self>, key: &Value) -> Option<Value> {
         let key = key.as_str()?;
         match key {
-            "title" => Some(Value::from(&self.title)),
-            "content" => Some(Value::from(&self.content)),
-            "date" => Some(Value::from(self.date.format(DATE_FORMAT).to_string())),
-            "slug" => Some(Value::from(&self.slug)),
-            "tags" => Some(Value::from(self.tags.clone())),
-            "draft" => Some(Value::from(self.draft)),
+            "title" => Some(Value::from(self.title())),
+            "content" => Some(Value::from(self.content())),
+            "date" => Some(Value::from(self.date().format(DATE_FORMAT).to_string())),
+            "slug" => Some(Value::from(self.slug())),
+            "tags" => Some(Value::from(self.tags())),
+            "draft" => Some(Value::from(self.draft())),
             _ => None,
         }
     }

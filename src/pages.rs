@@ -19,6 +19,8 @@ const HEADER_HTML: &str = "header.html";
 pub const POST_HTML: &str = "post.html";
 const POSTS_HTML: &str = "posts.html";
 pub const QUOTE_HTML: &str = "quote.html";
+pub const INFO_HTML: &str = "info.html";
+pub const ALERTBOX_HTML: &str = "alertbox.html";
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 pub struct Pages {
@@ -34,6 +36,8 @@ impl Pages {
         self.build_base_template(template_path, POST_HTML, false)?;
         self.build_base_template(template_path, POSTS_HTML, true)?;
         self.build_base_template(template_path, QUOTE_HTML, false)?;
+        self.build_base_template(template_path, INFO_HTML, false)?;
+        self.build_base_template(template_path, ALERTBOX_HTML, false)?;
 
         self.items
             .sort_unstable_by_key(|item| (item.title.clone(), item.slug.clone()));

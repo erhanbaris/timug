@@ -11,35 +11,36 @@ use minify_html::minify;
 use minijinja::{context, path_loader, Environment, Value};
 
 use crate::{
-    context::TimugContext,
-    extensions::quote,
+    context::get_context,
+    extensions::{alertbox, fontawesome, gist, info, quote},
     pages::{Pages, POST_HTML},
-    posts::Posts,
+    posts::Posts, tools::parse_yaml,
 };
 
 pub struct RenderEngine<'a> {
     pub env: Environment<'a>,
-    pub ctx: TimugContext,
+    pub posts: Posts,
     posts_value: Value,
     pages_value: Value,
 }
 
 impl<'a> RenderEngine<'a> {
-    pub fn new(ctx: TimugContext) -> Self {
+    pub fn new() -> Self {
         let env = Environment::new();
         Self {
             env,
-            ctx,
+            posts: Posts::default(),
             posts_value: Value::default(),
             pages_value: Value::default(),
         }
     }
 
     pub fn run(&mut self) -> anyhow::Result<()> {
-        self.env
-            .set_loader(path_loader(self.ctx.templates_path.clone()));
+        let ctx = get_context();
+        self.env.set_loader(path_loader(ctx.templates_path.clone()));
         self.build_filters();
         self.build_globals();
+        self.build_extensions();
         self.build_functions();
 
         self.parse_posts()?;
@@ -54,27 +55,43 @@ impl<'a> RenderEngine<'a> {
     }
 
     pub fn build_globals(&mut self) {
-        let config = &self.ctx.config;
+        let ctx = get_context();
+        let config = &ctx.config;
         self.env.add_global("author_name", &config.author);
         self.env.add_global("author_email", &config.email);
         self.env.add_global("site_url", &config.site_url);
         self.env.add_global("lang", &config.lang);
         self.env.add_global("description", &config.description);
         self.env.add_global("blog_name", &config.title);
+    }
+
+    pub fn build_extensions(&mut self) {
         self.env
             .add_global("quote", Value::from_object(quote::Quote::new()));
+        self.env.add_global(
+            "fontawesome",
+            Value::from_object(fontawesome::FontAwesome::new()),
+        );
+        self.env
+            .add_global("gist", Value::from_object(gist::Gist::new()));
+        self.env
+            .add_global("alertbox", Value::from_object(alertbox::AlertBox::new()));
+        self.env
+            .add_global("info", Value::from_object(info::Info::new()));
     }
 
     pub fn parse_posts(&mut self) -> anyhow::Result<()> {
-        let posts = Posts::load(&self.ctx.posts_path)?;
-        self.posts_value = Value::from_object(posts);
+        let ctx = get_context();
+        self.posts = Posts::load(&ctx.posts_path)?;
+        self.posts_value = Value::from_object(self.posts.clone());
         Ok(())
     }
 
     pub fn parse_pages(&mut self) -> anyhow::Result<()> {
+        let ctx = get_context();
         let mut pages = Pages::default();
-        pages.load_base_pages(&self.ctx.templates_path)?;
-        pages.load_custom_pages(&self.ctx.pages_path)?;
+        pages.load_base_pages(&ctx.templates_path)?;
+        pages.load_custom_pages(&ctx.pages_path)?;
 
         for page in pages.items.iter() {
             self.env
@@ -85,11 +102,8 @@ impl<'a> RenderEngine<'a> {
     }
 
     pub fn generate_posts(&mut self) -> anyhow::Result<()> {
-        let deployment_folder = self
-            .ctx
-            .config
-            .blog_path
-            .join(&self.ctx.config.deployment_folder);
+        let ctx = get_context();
+        let deployment_folder = ctx.config.blog_path.join(&ctx.config.deployment_folder);
 
         let mut created_paths = Vec::new();
         let mut generate_path = |path: &PathBuf| -> anyhow::Result<()> {
@@ -108,28 +122,32 @@ impl<'a> RenderEngine<'a> {
             .context("'posts' is not a Posts type".to_string())?;
 
         for post in posts.items.iter() {
-            if post.draft {
+            if post.draft() {
                 continue;
             }
 
             let mut post = post.clone();
-
+            let date = post.date();
             let file_path = deployment_folder
-                .join(post.date.year().to_string())
-                .join(post.date.month().to_string())
-                .join(post.date.day().to_string());
-            let file_name = file_path.join(format!("{}.html", post.slug));
+                .join(date.year().to_string())
+                .join(date.month().to_string())
+                .join(date.day().to_string());
+            let file_name = file_path.join(format!("{}.html", post.slug()));
 
-            println!("{}: {}", "Compiling".yellow(), post.slug);
+            println!("{}: {}", "Compiling".yellow(), post.slug());
 
-            if post.content.contains("{%") {
-                let context = context!(config => self.ctx.config, post => post, posts => self.posts_value, pages => self.pages_value, active_page => "posts");
-                let content = self.env.render_str(&post.content, &context)?;
-                post.content = content;
+            if post.content().contains("{%") {
+                let context = context!(config => ctx.config, post => Value::from_object(post.clone()), posts => self.posts_value, pages => self.pages_value, active_page => "posts");
+                let content = self.env.render_str(post.content(), &context)?;
+                post.set_content(content);
             }
 
+            let mut content = String::new();
+            pulldown_cmark::html::push_html(&mut content, parse_yaml(post.content()));
+            post.set_content(content);
+
             let template = self.env.get_template(POST_HTML)?;
-            let context = context!(config => self.ctx.config, post => post, posts => self.posts_value, pages => self.pages_value, active_page => "posts");
+            let context = context!(config => ctx.config, post => Value::from_object(post.clone()), posts => self.posts_value, pages => self.pages_value, active_page => "posts");
             let content = template.render(context)?;
             generate_path(&file_path)?;
             self.compress_and_write(content, &file_name)?;
@@ -155,13 +173,15 @@ impl<'a> RenderEngine<'a> {
     }
 
     pub fn move_statics(&mut self) -> anyhow::Result<()> {
+        let ctx = get_context();
         Ok(Self::copy_dir_all(
-            &self.ctx.statics_path,
-            &self.ctx.config.deployment_folder,
+            &ctx.statics_path,
+            &ctx.config.deployment_folder,
         )?)
     }
 
     pub fn generate_pages(&mut self) -> anyhow::Result<()> {
+        let ctx = get_context();
         let pages = self
             .pages_value
             .as_object()
@@ -175,13 +195,12 @@ impl<'a> RenderEngine<'a> {
 
             let template = self.env.get_template(&page.path)?;
             println!("{}: {}", "Rendering".yellow(), page.path);
-            let content = template.render(context!(config => self.ctx.config, posts => self.posts_value, pages => self.pages_value, active_page => page))?;
+            let content = template.render(context!(config => ctx.config, posts => self.posts_value, pages => self.pages_value, active_page => page))?;
 
-            let file_path = self
-                .ctx
+            let file_path = ctx
                 .config
                 .blog_path
-                .join(self.ctx.config.deployment_folder.clone());
+                .join(ctx.config.deployment_folder.clone());
             let file_name = file_path.join(&page.file_name);
 
             self.compress_and_write(content, &file_name)?;

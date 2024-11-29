@@ -11,7 +11,7 @@ use crate::{post::Post, tools::get_files};
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 pub struct Posts {
-    pub items: Vec<Post>,
+    pub items: Arc<Vec<Post>>,
 }
 
 impl Posts {
@@ -25,9 +25,9 @@ impl Posts {
             println!("{}: {}", "Parsed".green(), file.display());
         }
 
-        items.sort_unstable_by_key(|item| (item.date, item.slug.clone())); // Todo: date should be descending
+        items.sort_unstable_by_key(|item| (item.date(), item.slug().to_string())); // Todo: date should be descending
 
-        Ok(Self { items })
+        Ok(Self { items: Arc::new(items) })
     }
 }
 
@@ -35,6 +35,7 @@ impl Object for Posts {
     fn repr(self: &Arc<Self>) -> minijinja::value::ObjectRepr {
         minijinja::value::ObjectRepr::Seq
     }
+    
     fn get_value(self: &Arc<Self>, index: &Value) -> Option<Value> {
         let item = self.items.get(index.as_usize()?)?;
         Some(Value::from_object(item.clone()))

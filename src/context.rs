@@ -1,4 +1,5 @@
 use std::path::PathBuf;
+use std::sync::OnceLock;
 
 use colored::Colorize;
 
@@ -20,7 +21,7 @@ pub struct TimugContext {
 }
 
 impl TimugContext {
-    pub fn build(timug_path: Option<String>) -> Self {
+    fn build(timug_path: Option<String>) -> Self {
         let current_path = std::env::current_dir().expect("Failed to get current directory");
         let config_path = match timug_path {
             Some(path) => path.into(),
@@ -49,4 +50,9 @@ impl TimugContext {
     fn get_path(config: &TimugConfig, name: &str) -> PathBuf {
         config.blog_path.join(name)
     }
+}
+
+pub fn get_context() -> &'static TimugContext {
+    static HASHMAP: OnceLock<TimugContext> = OnceLock::new();
+    HASHMAP.get_or_init(|| TimugContext::build(None))
 }

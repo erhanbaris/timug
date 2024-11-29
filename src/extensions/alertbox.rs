@@ -6,35 +6,29 @@ use minijinja::{
     Error, ErrorKind, State, Value,
 };
 
-use crate::{pages::QUOTE_HTML, tools::parse_yaml};
+use crate::{pages::ALERTBOX_HTML, tools::parse_yaml};
 
-pub struct Quote;
+pub struct AlertBox;
 
-impl std::fmt::Debug for Quote {
+impl std::fmt::Debug for AlertBox {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "quote")
+        write!(f, "info")
     }
 }
 
-impl Quote {
-    pub fn new() -> Quote {
-        Quote {}
+impl AlertBox {
+    pub fn new() -> AlertBox {
+        AlertBox {}
     }
 }
 
-impl Object for Quote {
+impl Object for AlertBox {
     fn repr(self: &Arc<Self>) -> ObjectRepr {
         ObjectRepr::Plain
     }
 
     fn call(self: &Arc<Self>, state: &State<'_, '_>, args: &[Value]) -> Result<Value, Error> {
-        let (position, kwargs): (Option<&str>, Kwargs) = from_args(args)?;
-
-        let position = match position {
-            Some("left") => "left".to_string(),
-            Some("right") => "right".to_string(),
-            _ => "center".to_string(),
-        };
+        let (style, title, kwargs): (&str, &str, Kwargs) = from_args(args)?;
 
         let caller: Value = kwargs.get("caller")?;
         let content = caller.call(state, args!())?;
@@ -49,8 +43,8 @@ impl Object for Quote {
         let mut compiled_content = String::new();
         pulldown_cmark::html::push_html(&mut compiled_content, parse_yaml(content));
 
-        let template = state.env().get_template(QUOTE_HTML)?;
-        let context = context!(content => compiled_content, position => position);
+        let template = state.env().get_template(ALERTBOX_HTML)?;
+        let context = context!(content => compiled_content, title => title, style => style);
         let content = template.render(context)?;
 
         Ok(Value::from_safe_string(content))

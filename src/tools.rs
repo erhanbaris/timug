@@ -1,7 +1,7 @@
 use std::path::{Path, PathBuf};
 
 use anyhow::Context;
-use pulldown_cmark::{Event, Options, Tag, TagEnd};
+use pulldown_cmark::{Options, Parser};
 
 use crate::error::TimugError;
 
@@ -50,13 +50,7 @@ pub fn get_file_content(path: &PathBuf) -> Result<String, TimugError> {
     }
 }
 
-pub struct YamlData<'a> {
-    pub metadata: String,
-    pub body_items: Vec<Event<'a>>,
-}
-
-pub fn parse_yaml(content: &'_ str) -> YamlData<'_> {
-    let mut heading_indexer = 0;
+pub fn parse_yaml(content: &'_ str) -> Parser<'_> {
     let mut opts = Options::empty();
     opts.insert(Options::ENABLE_YAML_STYLE_METADATA_BLOCKS);
     opts.insert(Options::ENABLE_PLUSES_DELIMITED_METADATA_BLOCKS);
@@ -64,53 +58,7 @@ pub fn parse_yaml(content: &'_ str) -> YamlData<'_> {
     opts.insert(Options::ENABLE_TABLES);
     opts.insert(Options::ENABLE_FOOTNOTES);
 
-    let parser = pulldown_cmark::Parser::new_ext(content, opts);
-    let mut metacontent_started = false;
-    let mut metadata = String::new();
-    let mut body_items = Vec::new();
-
-    for event in parser.into_iter() {
-        match event {
-            Event::Start(Tag::MetadataBlock(_)) => {
-                metacontent_started = true;
-                continue;
-            }
-            Event::Start(Tag::Heading {
-                level,
-                id: _,
-                classes,
-                attrs,
-            }) => {
-                let id = Some(format!("heading-{}", heading_indexer).into());
-                heading_indexer += 1;
-                body_items.push(Event::Start(Tag::Heading {
-                    level,
-                    id,
-                    classes,
-                    attrs,
-                }));
-                continue;
-            }
-            Event::End(TagEnd::MetadataBlock(_)) => {
-                metacontent_started = false;
-                continue;
-            }
-            _ => {}
-        }
-
-        if metacontent_started {
-            if let Event::Text(text) = event {
-                metadata.push_str(&text);
-            }
-        } else {
-            body_items.push(event);
-        }
-    }
-
-    YamlData {
-        metadata,
-        body_items,
-    }
+    pulldown_cmark::Parser::new_ext(content, opts)
 }
 
 #[derive(Debug)]
