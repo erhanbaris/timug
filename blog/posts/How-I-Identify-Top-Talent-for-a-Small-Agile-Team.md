@@ -12,7 +12,7 @@ We usually make small adjustments to a ready template and publish the ad. After 
 
 ## So what are these criterias - 1?
 
-{% call quote() %}
+{% call quote('right') %}
 "Details matter. It’s worth waiting to get it right."
 <br>
 Steve Jobs

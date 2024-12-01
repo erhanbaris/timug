@@ -28,5 +28,11 @@ date: 2023-10-29 15:34:13
 {% endcall %}
 
 {% call info() %}
-If anyone is interested, they can examine the [{% call fontawesome('fab', 'github') %}{% endcall %}vibration.yaml](https://github.com/erhanbaris/baby-sleep-track/blob/main/approach-1/vibration.yaml) file.
+If anyone is interested, they can examine the [{% call fontawesome("fab", "github") %}{% endcall %}vibration.yaml](https://github.com/erhanbaris/baby-sleep-track/blob/main/approach-1/vibration.yaml) file.
+{% endcall %}
+
+{% call quote("center") %}
+"Any fool can write code that a computer can understand. Good programmers write code that humans can understand."
+<br>
+Martin Fowler
 {% endcall %}

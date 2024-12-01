@@ -10,7 +10,8 @@
     {% block metas %}{% endblock %}
     {% block links %}{% endblock %}
     {% block scripts %}{% endblock %}
-    <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.15.4/css/all.css" integrity="sha384-DyZ88mC6Up2uqS4h/KRgHuoeGwBcD4Ng9SiP4dIRy0EXTlnuz47vAwmeGwVChigm" crossorigin="anonymous"/>
+    <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.15.4/css/all.css"
+        integrity="sha384-DyZ88mC6Up2uqS4h/KRgHuoeGwBcD4Ng9SiP4dIRy0EXTlnuz47vAwmeGwVChigm" crossorigin="anonymous" />
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -55,12 +56,12 @@
             ol {
                 @apply list-decimal ml-10 text-base leading-8 my-5;
             }
+            hr {
+                @apply my-6;
+            }
         }
-      </style>
-</head>
 
-<style>
-    q {
+        blockquote {
         font-family: 'Gotham SSm A', 'Gotham SSm B', 'Proxima Nova', Futura, Helvetica, sans-serif;
         font-weight: 400;
         letter-spacing: 1.5px;
@@ -69,7 +70,6 @@
         line-height: 1.25em;
         text-transform: uppercase;
         color: #A32B68;
-        max-width: 350px;
         background: -webkit-linear-gradient(top, #fd0b58 0px, #a32b68 100%);
         background: linear-gradient(top, #fd0b58 0px, #a32b68 100%);
         -webkit-background-clip: text;
@@ -84,35 +84,38 @@
         }
     }
 
-    q.left {
+    blockquote.left {
         margin: 10px 20px 10px 0;
         float: left;
+        max-width: 350px;
     }
 
-    q.center {
+    blockquote.center {
         margin: 10px 0 10px 0;
     }
 
-    q.right {
+    blockquote.right {
         margin: 10px 0 10px 20px;
         float: right;
+        max-width: 350px;
     }
-</style>
+      </style>
+</head>
 
 <body data-theme="light">
     <div class="flex flex-col h-screen justify-between">
-    {%- include "header.html" %}
+        {%- include "header.html" %}
 
-    <main class="relative p-4">
-        <div class="max-w-3xl mx-auto">
-            <div
-                class="mt-3 bg-white rounded-b lg:rounded-b-none lg:rounded-r flex flex-col justify-between leading-normal">
-                {% block body %}{% endblock %}
+        <main class="relative p-4">
+            <div class="max-w-3xl mx-auto">
+                <div
+                    class="mt-3 bg-white rounded-b lg:rounded-b-none lg:rounded-r flex flex-col justify-between leading-normal">
+                    {% block body %}{% endblock %}
+                </div>
             </div>
-        </div>
-    </main>
-    {%- include "footer.html" %}
-</div>
+        </main>
+        {%- include "footer.html" %}
+    </div>
 </body>
 
 </html>

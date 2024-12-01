@@ -41,15 +41,12 @@ impl Object for Info {
         })?;
 
 
-        println!("content: {}", content);
         let mut compiled_content = String::new();
         pulldown_cmark::html::push_html(&mut compiled_content, parse_yaml(content));
-        println!("content: {}", compiled_content);
 
         let template = state.env().get_template(INFO_HTML)?;
         let context = context!(content => compiled_content);
         let content = template.render(context)?;
-        println!("content: {}", content);
 
         Ok(Value::from_safe_string(content))
     }

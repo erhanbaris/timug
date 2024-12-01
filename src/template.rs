@@ -49,7 +49,7 @@ impl<'a> RenderEngine<'a> {
         self.generate_pages()?;
         self.generate_posts()?;
 
-        //self.move_statics()?;
+        self.move_statics()?;
 
         Ok(())
     }
@@ -142,6 +142,7 @@ impl<'a> RenderEngine<'a> {
                 post.set_content(content);
             }
 
+
             let mut content = String::new();
             pulldown_cmark::html::push_html(&mut content, parse_yaml(post.content()));
             post.set_content(content);
@@ -174,9 +175,11 @@ impl<'a> RenderEngine<'a> {
 
     pub fn move_statics(&mut self) -> anyhow::Result<()> {
         let ctx = get_context();
+
+        let deployment_folder = ctx.config.blog_path.join(&ctx.config.deployment_folder).join("statics");
         Ok(Self::copy_dir_all(
             &ctx.statics_path,
-            &ctx.config.deployment_folder,
+            &deployment_folder,
         )?)
     }
 
@@ -222,8 +225,8 @@ impl<'a> RenderEngine<'a> {
 
     fn compress_and_write(&self, content: String, path: &PathBuf) -> anyhow::Result<()> {
         let mut file = File::create(path)?;
-        let content = Self::compress_html(content);
-        Ok(file.write_all(&content)?)
+        //let content = Self::compress_html(content);
+        Ok(file.write_all(content.as_bytes())?)
     }
 }
 

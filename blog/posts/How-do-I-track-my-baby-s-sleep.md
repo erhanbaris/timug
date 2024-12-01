@@ -20,7 +20,7 @@ When it became a problem for us to keep track of when we put our baby to sleep, 
 We started by determining the equipment we could use. The cradle we use is like the one below and instead of swinging sideways, it swings up and down.
 
 <figure>
-    <img src="membantu.jpg">  
+    <img style="display: block; margin-left: auto; margin-right: auto;" src="/statics/membantu.jpg">  
     <figcaption style="text-align: center">Membantu Crib</figcaption>
 </figure>
 
@@ -37,7 +37,7 @@ The first thing that came to my mind was to track the crib with a motion sensor,
 
 
 <figure>
-    <img src="SW420-Vibration-Sensor-Module.jpg">  
+    <img style="display: block; margin-left: auto; margin-right: auto;" src="/statics/SW420-Vibration-Sensor-Module.jpg">  
     <figcaption style="text-align: center">sw-420 vibration sensor module</figcaption>
 </figure>
 
@@ -78,7 +78,7 @@ While examining the sensors I had, I decided that I could experiment with the **
 
 
 <figure>
-    <img src="Ultrasonic-Sensor-HC-SR04.jpg">  
+    <img style="display: block; margin-left: auto; margin-right: auto;" src="/statics/Ultrasonic-Sensor-HC-SR04.jpg">  
     <figcaption style="text-align: center">Ultrasonic Sensor HC-SR04</figcaption>
 </figure>
 
@@ -90,7 +90,7 @@ As shown in the figure, the expected distance per second is around 15cm.
 
 
 <figure>
-    <img src="hareket.jpg">  
+    <img style="display: block; margin-left: auto; margin-right: auto;" src="/statics/hareket.jpg">  
     <figcaption style="text-align: center">Cradle Movement</figcaption>
 </figure>
 
@@ -109,7 +109,7 @@ Below is the screenshot of the **Home Assistant** screen.
 
 
 <figure>
-    <img src="home-assistant-sc.jpg">  
+    <img style="display: block; margin-left: auto; margin-right: auto;" src="/statics/home-assistant-sc.jpg">  
     <figcaption style="text-align: center">Home Assistant Screenshot</figcaption>
 </figure>
 
@@ -172,7 +172,7 @@ If anyone is interested, they can check out [{% call fontawesome('fab', 'github'
 {% endcall %}
 
 <figure>
-    <img src="face-mesh.png">  
+    <img style="display: block; margin-left: auto; margin-right: auto;" src="/statics/face-mesh.png">  
     <figcaption style="text-align: center">Face Scanned with Face Mesh</figcaption>
 </figure>
 
@@ -190,7 +190,7 @@ I'm now tracking my baby's sleep more accurately, but there's just one problem l
 
 
 <figure>
-    <img src="home-assistant-sc2.jpg">  
+    <img style="display: block; margin-left: auto; margin-right: auto;" src="/statics/home-assistant-sc2.jpg">  
     <figcaption style="text-align: center">Home Assistant Screenshot</figcaption>
 </figure>
 
@@ -207,7 +207,6 @@ I'm now tracking my baby's sleep more accurately, but there's just one problem l
 3. System requirements are high
 4. Distracts baby trying to sleep
 5. Expensive equipment required
-
 {% endcall %}
 
 ## Epilogue
@@ -218,11 +217,9 @@ Among three different approaches, I decided that facial recognition was the best
 
 <br>
 
-<span class="info">
-
+{% call info() %}
 You can access the full source code of the project [{% call fontawesome('fab', 'github') %}{% endcall %}here](https://github.com/erhanbaris/baby-sleep-track/).
-
-</span>
+{% endcall %}
 
 <hr />
 
@@ -231,7 +228,7 @@ You can access the full source code of the project [{% call fontawesome('fab', '
 I developed a small **script** to monitor the baby's sleep status from the iPhone home screen with the **Scriptable** application.
 
 <figure>
-    <img src="ios-sc.jpg">  
+    <img style="display: block; margin-left: auto; margin-right: auto;" src="/statics/ios-sc.jpg">  
     <figcaption style="text-align: center">IOS Screenshot</figcaption>
 </figure>
 
