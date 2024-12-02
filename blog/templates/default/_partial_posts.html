@@ -1,0 +1,23 @@
+<section class="mb-8">
+  <ul class="flex flex-col divide-y divide-slate-200">
+    {%- for post in posts %}
+    <li class="group">
+      <a class="block px-0 md:px-6 py-4 text-inherit" href="{{ post_url(post.lang, post.slug) }}">
+        <div class="summary flex flex-row gap-8 text-slate-700">
+          <div class="flex flex-1 flex-col gap-2">
+            <time class="text-xs text-slate-500 ">{{ post.date | formatdatetime("%B %d, %Y") }}</time>
+            <h2 class="post_title text-balanced mb-0 ">{{ post.title -}}</h2>
+            <p class="text-balanced mb-0 text-slate-600 text-sm/6">{{ post.title -}}</p>
+          </div>
+          <div class="my-auto group-hover:translate-x-2 transition-transform">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
+              stroke="currentColor" class="size-6">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M17.25 8.25 21 12m0 0-3.75 3.75M21 12H3"></path>
+            </svg>
+          </div>
+        </div>
+      </a>
+    </li>
+    {% endfor %}
+  </ul>
+</section>

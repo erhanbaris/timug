@@ -1,18 +1,20 @@
 use std::sync::Arc;
 
 use minijinja::{
-    args, context,
+    args, render,
     value::{from_args, Kwargs, Object, ObjectRepr},
     Error, ErrorKind, State, Value,
 };
 
-use crate::{pages::ALERTBOX_HTML, tools::parse_yaml};
+use super::Extension;
+
+static ALERTBOX_HTML: &str = include_str!("alertbox.html");
 
 pub struct AlertBox;
 
 impl std::fmt::Debug for AlertBox {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "info")
+        write!(f, "alertbox")
     }
 }
 
@@ -40,13 +42,17 @@ impl Object for AlertBox {
             )
         })?;
 
-        let mut compiled_content = String::new();
-        pulldown_cmark::html::push_html(&mut compiled_content, parse_yaml(content));
-
-        let template = state.env().get_template(ALERTBOX_HTML)?;
-        let context = context!(content => compiled_content, title => title, style => style);
-        let content = template.render(context)?;
-
+        let content = render!(ALERTBOX_HTML, content => content, title => title, style => style);
         Ok(Value::from_safe_string(content))
+    }
+}
+
+impl<'a> Extension<'a> for AlertBox {
+    fn name() -> &'static str {
+        "alertbox"
+    }
+
+    fn register(env: &mut minijinja::Environment<'a>) {
+        env.add_global(Self::name(), Value::from_object(Self::new()));
     }
 }

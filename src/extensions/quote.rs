@@ -1,12 +1,15 @@
 use std::sync::Arc;
 
 use minijinja::{
-    args, context,
+    args, render,
     value::{from_args, Kwargs, Object, ObjectRepr},
     Error, ErrorKind, State, Value,
 };
 
-use crate::{pages::QUOTE_HTML, tools::parse_yaml};
+use super::Extension;
+
+static QUOTE_HTML: &str =
+    r#"<blockquote class="my-5 {{ position }}">{{ content | safe }}</blockquote>"#;
 
 pub struct Quote;
 
@@ -46,13 +49,17 @@ impl Object for Quote {
             )
         })?;
 
-        let mut compiled_content = String::new();
-        pulldown_cmark::html::push_html(&mut compiled_content, parse_yaml(content));
-
-        let template = state.env().get_template(QUOTE_HTML)?;
-        let context = context!(content => compiled_content, position => position);
-        let content = template.render(context)?;
-
+        let content = render!(QUOTE_HTML, content => content, position => position);
         Ok(Value::from_safe_string(content))
+    }
+}
+
+impl<'a> Extension<'a> for Quote {
+    fn name() -> &'static str {
+        "quote"
+    }
+
+    fn register(env: &mut minijinja::Environment<'a>) {
+        env.add_global(Self::name(), Value::from_object(Self::new()));
     }
 }

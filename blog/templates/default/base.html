@@ -10,11 +10,19 @@
     {% block metas %}{% endblock %}
     {% block links %}{% endblock %}
     {% block scripts %}{% endblock %}
-    <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.15.4/css/all.css"
-        integrity="sha384-DyZ88mC6Up2uqS4h/KRgHuoeGwBcD4Ng9SiP4dIRy0EXTlnuz47vAwmeGwVChigm" crossorigin="anonymous" />
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="preconnect" href="https://rsms.me/">
+    <link rel="stylesheet" href="https://rsms.me/inter/inter.css">
+    <link rel="stylesheet" href="/statics/style.css">
+    
+    <!-- Extension headers -->
+    {%- for header in headers %}
+        {{ header | safe }}
+    {% endfor %}
+    <!-- Extension headers -->
+
     <link
         href="https://fonts.googleapis.com/css2?family=Nunito:ital,wght@0,200..1000;1,200..1000&family=Open+Sans:ital,wght@0,300..800;1,300..800&family=Roboto:ital,wght@0,100;0,300;0,400;0,500;0,700;0,900;1,100;1,300;1,400;1,500;1,700;1,900&display=swap"
         rel="stylesheet">
@@ -35,71 +43,27 @@
         @tailwind base;
         @tailwind components;
         @tailwind utilities;
-        @layer utilities {
-          .content-auto {
-            content-visibility: auto;
-          }
-        }
         @layer components {
-            .btn-blue {
-                @apply relative w-full py-3 px-3 hover:shadow-lg hover:ring-4 ring-[#24292F] ring-offset-2 inline-flex justify-center items-center gap-x-2 text-lg font-sans font-thin rounded-lg border border-transparent bg-gradient-to-r from-[#24292F] to-[#24292F]/90 text-white disabled:opacity-50 disabled:pointer-events-none transition ease-in-out duration-300;
-            }
             h1 {
-                @apply text-gray-900 font-bold text-4xl;
+                @apply text-gray-900 font-bold text-3xl;
             }
             h2 {
-                @apply text-gray-900 font-bold text-2xl;
+                @apply text-gray-900 font-bold text-lg;
             }
-            p {
-                @apply text-base leading-8 my-5;
-            }
-            ol {
-                @apply list-decimal ml-10 text-base leading-8 my-5;
+            .post > h2 {
+                @apply mt-10;
             }
             hr {
                 @apply my-6;
             }
+            .post > p {
+                @apply text-base leading-8 my-5;
+            }
+            .post ol {
+                @apply list-decimal ml-5 text-base leading-7;
+            }
         }
-
-        blockquote {
-        font-family: 'Gotham SSm A', 'Gotham SSm B', 'Proxima Nova', Futura, Helvetica, sans-serif;
-        font-weight: 400;
-        letter-spacing: 1.5px;
-        font-style: normal;
-        font-size: 20px;
-        line-height: 1.25em;
-        text-transform: uppercase;
-        color: #A32B68;
-        background: -webkit-linear-gradient(top, #fd0b58 0px, #a32b68 100%);
-        background: linear-gradient(top, #fd0b58 0px, #a32b68 100%);
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-
-        &:before {
-            content: '';
-        }
-
-        &:after {
-            content: '';
-        }
-    }
-
-    blockquote.left {
-        margin: 10px 20px 10px 0;
-        float: left;
-        max-width: 350px;
-    }
-
-    blockquote.center {
-        margin: 10px 0 10px 0;
-    }
-
-    blockquote.right {
-        margin: 10px 0 10px 20px;
-        float: right;
-        max-width: 350px;
-    }
-      </style>
+    </style>
 </head>
 
 <body data-theme="light">
@@ -117,5 +81,9 @@
         {%- include "footer.html" %}
     </div>
 </body>
-
+<!-- Extension after body -->
+{%- for after_body in after_bodies %}
+    {{ after_body | safe }}
+{% endfor %}
+<!-- Extension after body -->
 </html>

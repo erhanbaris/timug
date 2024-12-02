@@ -18,9 +18,15 @@ const FOOTER_HTML: &str = "footer.html";
 const HEADER_HTML: &str = "header.html";
 pub const POST_HTML: &str = "post.html";
 const POSTS_HTML: &str = "posts.html";
-pub const QUOTE_HTML: &str = "quote.html";
-pub const INFO_HTML: &str = "info.html";
-pub const ALERTBOX_HTML: &str = "alertbox.html";
+
+const TEMPLATE_HTMLS: [&str; 6] = [
+    BASE_HTML,
+    INDEX_HTML,
+    FOOTER_HTML,
+    HEADER_HTML,
+    POST_HTML,
+    POSTS_HTML,
+];
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 pub struct Pages {
@@ -30,14 +36,12 @@ pub struct Pages {
 impl Pages {
     pub fn load_base_pages(&mut self, template_path: &Path) -> anyhow::Result<()> {
         self.build_base_template(template_path, INDEX_HTML, true)?;
-        self.build_base_template(template_path, BASE_HTML, false)?;
-        self.build_base_template(template_path, FOOTER_HTML, false)?;
-        self.build_base_template(template_path, HEADER_HTML, false)?;
-        self.build_base_template(template_path, POST_HTML, false)?;
         self.build_base_template(template_path, POSTS_HTML, true)?;
-        self.build_base_template(template_path, QUOTE_HTML, false)?;
-        self.build_base_template(template_path, INFO_HTML, false)?;
-        self.build_base_template(template_path, ALERTBOX_HTML, false)?;
+
+        TEMPLATE_HTMLS.iter().for_each(|name| {
+            self.build_base_template(template_path, name, false)
+                .unwrap();
+        });
 
         self.items
             .sort_unstable_by_key(|item| (item.title.clone(), item.slug.clone()));
@@ -70,7 +74,7 @@ impl Pages {
         }
 
         self.items
-            .sort_unstable_by_key(|item| (item.order.clone(), item.title.clone()));
+            .sort_unstable_by_key(|item| (item.order, item.title.clone()));
 
         Ok(())
     }

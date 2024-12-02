@@ -42,11 +42,11 @@ The first thing that came to my mind was to track the crib with a motion sensor,
 </figure>
 
 
-The **sw-420 vibration sensor module**, sold with almost all Arduino kits, was exactly the solution I was looking for. First, to see what I could do with the Arduino Nano I had, I downloaded and installed the **Arduino Ide**<sup>[link 1](#link-1)</sup>. As a result of a short search on the Internet (which is even available in the examples in the Arduino Ide), I found a simple sample application code.
+The **sw-420 vibration sensor module**, sold with almost all Arduino kits, was exactly the solution I was looking for. First, to see what I could do with the Arduino Nano I had, I downloaded and installed the **Arduino Ide**[^1]. As a result of a short search on the Internet (which is even available in the examples in the Arduino Ide), I found a simple sample application code.
 
 In my first attempts, the device worked as I expected. But the results sent were very inconsistent. I made arrangements for a change of situation, but it didn't really work. While researching on the internet, I came across **ESPHome**, which is fully integrated with **Home Assistant**.
 
-I purchased **ESP8266** with an integrated Wifi module<sup>[link 2](#link-2)</sup>.
+I purchased **ESP8266** with an integrated Wifi module[^2].
 
 I quickly developed the application via **ESPHome** and started tracking it. It really gave me the results I wanted at first use, but then it started to give inconsistent results. It was stuck in **on** or **off** state or continued to send incorrect messages. Even though I tried to make adjustments with the calibration setting on it, I cannot say that I was very successful. I can say that it was a complete disappointment.
 
@@ -145,13 +145,13 @@ Of course, I encountered another problem. This time the baby was not sleeping ev
 ### Eye tracking with camera
 So, can we put a camera inside the crib and follow the baby's sleep? Tracking whether your eyes are open or closed gives much more accurate results. The other two approaches allow us to follow from the outside and give general results, but the camera approach seems to be much more effective.
 
-While I was searching for a camera compatible with **ESP8266**, I came across **ESP32-CAM**<sup>[link 3](#link-3)</sup>. It is much more useful with its integrated camera and wifi module. It has WIFI, it has a camera, and it is **ESP32** based, so I do not need to connect with **ESP8266**.
+While I was searching for a camera compatible with **ESP8266**, I came across **ESP32-CAM**[^3]. It is much more useful with its integrated camera and wifi module. It has WIFI, it has a camera, and it is **ESP32** based, so I do not need to connect with **ESP8266**.
 
 After waiting a few days, the product arrived and I immediately started making the first tests.
 
 A complete disappointment. The image quality is bad, it is very slow and the images are dark. When I put it in the crib, I couldn't even get a clear image. I had to return it.
 
-But another option, and actually the most logical one, was to use a baby camera. The **ieGeek Baby 1T**<sup>[link 4](#link-4)</sup> baby camera that I use on a daily basis has the features I want.
+But another option, and actually the most logical one, was to use a baby camera. The **ieGeek Baby 1T**[^4] baby camera that I use on a daily basis has the features I want.
 
 - Can also be used in dark environments with **night vision**
 - Can be placed inside the baby crib with **wide-angle camera**
@@ -159,13 +159,13 @@ But another option, and actually the most logical one, was to use a baby camera.
 
 The only problem is accessing the camera over the network. The device has **Onvif** support, but I want to connect with **rtsp** instead of **Onvif**. The reason for this is because I think it will be easier to use with **OpenCv**.
 
-I also bought a camera holder online to stabilize the camera<sup>[link 5](#link-5)</sup>.
+I also bought a camera holder online to stabilize the camera[^5]</sup>.
 
 Getting the **rtsp** address was a bit difficult, this information can be obtained with many paid applications on the internet. But I got this information using open source applications. There are two different **rtsp** addresses depending on image quality.
 - rtsp://USERNAME:PASSWORD@IP_ADDRESS:8554/Streaming/Channels/101
 - rtsp://USERNAME:PASSWORD@IP_ADDRESS:8554/Streaming/Channels/102
 
-**OpenCV** has facial recognition, but the results were not very consistent. The best solution I could find for my needs was **Google MediaPipe**<sup>[link 6](#link-6)</sup>. It can easily detect facial features with face mesh.
+**OpenCV** has facial recognition, but the results were not very consistent. The best solution I could find for my needs was **Google MediaPipe**[^6]</sup>. It can easily detect facial features with face mesh.
 
 {% call info() %}
 If anyone is interested, they can check out [{% call fontawesome('fab', 'github') %}{% endcall %} third method folder](https://github.com/erhanbaris/baby-sleep-track/blob/main/approach-3).
@@ -244,9 +244,9 @@ _Note_: I do not share the vibration and ultrasonic sensor connection diagrams, 
 
 #### Links
 
-<a name="link-1" /><sup>1</sup> https://www.arduino.cc/en/software
-<a name="link-2" /><sup>2</sup> https://www.amazon.de/dp/B0754N794H?ref=ppx_yo2ov_dt_b_product_details&th=1
-<a name="link-3" /><sup>3</sup> https://www.amazon.de/dp/B08X3GRK22?psc=1&ref=ppx_yo2ov_dt_b_product_details
-<a name="link-4" /><sup>4</sup> https://www.amazon.de/dp/B0CDGHV276?psc=1&ref=ppx_yo2ov_dt_b_product_details
-<a name="link-5" /><sup>5</sup> https://www.amazon.de/dp/B0B8ZT5HDW?psc=1&ref=ppx_yo2ov_dt_b_product_details
-<a name="link-6" /><sup>6</sup> https://developers.google.com/mediapipe
+[^1]: https://www.arduino.cc/en/software
+[^2]: https://www.amazon.de/dp/B0754N794H?ref=ppx_yo2ov_dt_b_product_details&th=1
+[^3]: https://www.amazon.de/dp/B08X3GRK22?psc=1&ref=ppx_yo2ov_dt_b_product_details
+[^4]: https://www.amazon.de/dp/B0CDGHV276?psc=1&ref=ppx_yo2ov_dt_b_product_details
+[^5]: https://www.amazon.de/dp/B0B8ZT5HDW?psc=1&ref=ppx_yo2ov_dt_b_product_details
+[^6]: https://developers.google.com/mediapipe

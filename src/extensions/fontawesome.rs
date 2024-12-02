@@ -5,6 +5,8 @@ use minijinja::{
     Error, State, Value,
 };
 
+use super::Extension;
+
 pub struct FontAwesome;
 
 impl std::fmt::Debug for FontAwesome {
@@ -30,5 +32,19 @@ impl Object for FontAwesome {
             "<i class=\"{} fa-{}\"></i>",
             style, icon
         )))
+    }
+}
+
+impl<'a> Extension<'a> for FontAwesome {
+    fn name() -> &'static str {
+        "fontawesome"
+    }
+
+    fn register(env: &mut minijinja::Environment<'a>) {
+        env.add_global(Self::name(), Value::from_object(Self::new()));
+    }
+
+    fn header() -> &'static str {
+        r#"<link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.15.4/css/all.css" integrity="sha384-DyZ88mC6Up2uqS4h/KRgHuoeGwBcD4Ng9SiP4dIRy0EXTlnuz47vAwmeGwVChigm" crossorigin="anonymous" />"#
     }
 }

@@ -1,12 +1,16 @@
 use std::sync::Arc;
 
 use minijinja::{
-    args, context,
+    args, render,
     value::{from_args, Kwargs, Object, ObjectRepr},
     Error, ErrorKind, State, Value,
 };
 
-use crate::{pages::INFO_HTML, tools::parse_yaml};
+use crate::tools::parse_yaml;
+
+use super::Extension;
+
+static INFO_HTML: &str = include_str!("info.html");
 
 pub struct Info;
 
@@ -40,14 +44,20 @@ impl Object for Info {
             )
         })?;
 
-
         let mut compiled_content = String::new();
         pulldown_cmark::html::push_html(&mut compiled_content, parse_yaml(content));
 
-        let template = state.env().get_template(INFO_HTML)?;
-        let context = context!(content => compiled_content);
-        let content = template.render(context)?;
-
+        let content = render!(INFO_HTML, content => compiled_content);
         Ok(Value::from_safe_string(content))
+    }
+}
+
+impl<'a> Extension<'a> for Info {
+    fn name() -> &'static str {
+        "info"
+    }
+
+    fn register(env: &mut minijinja::Environment<'a>) {
+        env.add_global(Self::name(), Value::from_object(Self::new()));
     }
 }

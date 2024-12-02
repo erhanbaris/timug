@@ -5,6 +5,8 @@ use minijinja::{
     Error, State, Value,
 };
 
+use super::Extension;
+
 pub struct Gist;
 
 impl std::fmt::Debug for Gist {
@@ -30,5 +32,15 @@ impl Object for Gist {
             "<script src=\"https://gist.github.com/{}.js?file={}\"></script>",
             gist, filename
         )))
+    }
+}
+
+impl<'a> Extension<'a> for Gist {
+    fn name() -> &'static str {
+        "gist"
+    }
+
+    fn register(env: &mut minijinja::Environment<'a>) {
+        env.add_global(Self::name(), Value::from_object(Self::new()));
     }
 }

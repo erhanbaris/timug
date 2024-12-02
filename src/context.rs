@@ -2,6 +2,7 @@ use std::path::PathBuf;
 use std::sync::OnceLock;
 
 use colored::Colorize;
+use std::sync::{RwLock, RwLockReadGuard, RwLockWriteGuard};
 
 use crate::config::TimugConfig;
 
@@ -11,6 +12,8 @@ const PAGES_PATH: &str = "pages";
 const STATICS_PATH: &str = "statics";
 const CONFIG_FILE_NAME: &str = "timug.yaml";
 
+static CONTEXT: OnceLock<RwLock<TimugContext>> = OnceLock::new();
+
 #[derive(Debug, Default)]
 pub struct TimugContext {
     pub config: TimugConfig,
@@ -18,6 +21,8 @@ pub struct TimugContext {
     pub posts_path: PathBuf,
     pub pages_path: PathBuf,
     pub statics_path: PathBuf,
+    pub headers: Vec<&'static str>,
+    pub after_bodies: Vec<&'static str>,
 }
 
 impl TimugContext {
@@ -44,6 +49,8 @@ impl TimugContext {
             posts_path,
             pages_path,
             statics_path,
+            headers: Default::default(),
+            after_bodies: Default::default(),
         }
     }
 
@@ -52,7 +59,16 @@ impl TimugContext {
     }
 }
 
-pub fn get_context() -> &'static TimugContext {
-    static HASHMAP: OnceLock<TimugContext> = OnceLock::new();
-    HASHMAP.get_or_init(|| TimugContext::build(None))
+pub fn get_context() -> RwLockReadGuard<'static, TimugContext> {
+    CONTEXT
+        .get_or_init(|| TimugContext::build(None).into())
+        .read()
+        .unwrap()
+}
+
+pub fn get_mut_context() -> RwLockWriteGuard<'static, TimugContext> {
+    CONTEXT
+        .get_or_init(|| TimugContext::build(None).into())
+        .write()
+        .unwrap()
 }

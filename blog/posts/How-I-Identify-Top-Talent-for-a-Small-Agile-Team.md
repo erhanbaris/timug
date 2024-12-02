@@ -28,9 +28,7 @@ These are just the criterias to pass the first stage. After that, I send tests t
 ## So what are these criterias - 2?
 
 {% call quote("center") %}
-"Any fool can write code that a computer can understand. Good programmers write code that humans can understand."
-<br>
-Martin Fowler
+"Any fool can write code that a computer can understand. Good programmers write code that humans can understand." — Martin Fowler
 {% endcall %}
 
 
@@ -45,9 +43,7 @@ Based on test results, we invite shortlisted candidates for interviews—ideally
 
 
 {% call quote('right') %}
-"Hire character. Train skill."
-<br>
-Peter Schutz
+"Hire character. Train skill." — Peter Schutz
 {% endcall %}
 
 
@@ -59,9 +55,7 @@ Peter Schutz
 There are many criterias here, but each criterion can sometimes take precedence over another criterion. This may vary depending on the person, how urgently we are looking for a new employee, and the status of other criterias. 
 
 {% call quote('right') %}
-"The only way to do great work is to love what you do."
-<br>
-Steve Jobs
+"The only way to do great work is to love what you do." — Steve Jobs
 {% endcall %}
 
 I have never examined any resumes so far, and I have never looked at which school they went to, which department they graduated from, or what score they received. These only show how good they are in the education system. However, they do not reflect who they really are or what they can do. In fact, I have even sent tests and interviewed people who were very enthusiastic but had no work experience and no training in this field. Therefore, understanding one’s shortcomings and striving for improvement is essential.

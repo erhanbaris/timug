@@ -1,0 +1,52 @@
+/* CSS */
+:root {
+    font-family: Inter, sans-serif;
+    font-feature-settings: 'liga' 1, 'calt' 1;
+    /* fix for Chrome */
+}
+
+@supports (font-variation-settings: normal) {
+    :root {
+        font-family: InterVariable, sans-serif;
+    }
+}
+
+
+blockquote {
+    font-family: 'Gotham SSm A', 'Gotham SSm B', 'Proxima Nova', Futura, Helvetica, sans-serif;
+    font-weight: 400;
+    letter-spacing: 1.5px;
+    font-style: normal;
+    font-size: 20px;
+    line-height: 1.25em;
+    text-transform: uppercase;
+    color: #A32B68;
+    background: -webkit-linear-gradient(top, #fd0b58 0px, #a32b68 100%);
+    background: linear-gradient(top, #fd0b58 0px, #a32b68 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+
+    &:before {
+        content: '';
+    }
+
+    &:after {
+        content: '';
+    }
+}
+
+blockquote.left {
+    margin: 10px 20px 10px 0;
+    float: left;
+    max-width: 350px;
+}
+
+blockquote.center {
+    margin: 20px 0 20px 0;
+}
+
+blockquote.right {
+    margin: 10px 0 10px 20px;
+    float: right;
+    max-width: 350px;
+}

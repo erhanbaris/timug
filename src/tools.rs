@@ -103,3 +103,70 @@ pub fn yaml_front_matter(content: &'_ str) -> FrontMatterInfo<'_> {
         }
     }
 }
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::fs::File;
+    use std::io::Write;
+    use tempfile::tempdir;
+
+    #[test]
+    fn test_get_file_name() {
+        let path = Path::new("/some/path/filename.txt");
+        let file_name = get_file_name(path).unwrap();
+        assert_eq!(file_name, "filename.txt");
+    }
+
+    #[test]
+    fn test_get_path() {
+        let path = Path::new("/some/path/filename.txt");
+        let path_str = get_path(path).unwrap();
+        assert_eq!(path_str, "/some/path/filename.txt");
+    }
+
+    #[test]
+    fn test_get_files() {
+        let dir = tempdir().unwrap();
+        let file_path = dir.path().join("test.md");
+        File::create(&file_path).unwrap();
+
+        let files = get_files(&dir.path().to_path_buf(), "md").unwrap();
+        assert_eq!(files.len(), 1);
+        assert_eq!(files[0], file_path);
+    }
+
+    #[test]
+    fn test_get_file_content() {
+        let dir = tempdir().unwrap();
+        let file_path = dir.path().join("test.txt");
+        let mut file = File::create(&file_path).unwrap();
+        writeln!(file, "Hello, world!").unwrap();
+
+        let content = get_file_content(&file_path).unwrap();
+        assert_eq!(content, "Hello, world!\n");
+    }
+
+    #[test]
+    fn test_parse_yaml() {
+        let content = "---\nkey: value\n---\n# Heading\n";
+        let parser = parse_yaml(content);
+        let events: Vec<_> = parser.collect();
+        assert!(events.len() > 0);
+    }
+
+    #[test]
+    fn test_yaml_front_matter() {
+        let content = "---\nkey: value\n---\n# Heading\n";
+        let front_matter_info = yaml_front_matter(content);
+        assert_eq!(front_matter_info.metadata, Some("key: value"));
+        assert_eq!(front_matter_info.content, "# Heading\n");
+    }
+
+    #[test]
+    fn test_yaml_front_matter_no_metadata() {
+        let content = "# Heading\n";
+        let front_matter_info = yaml_front_matter(content);
+        assert_eq!(front_matter_info.metadata, None);
+        assert_eq!(front_matter_info.content, "# Heading\n");
+    }
+}

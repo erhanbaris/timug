@@ -90,7 +90,9 @@ impl Post {
         }
 
         post.content = front_matter.content.to_string();
-        Ok(Post { inner: Arc::new(post) })
+        Ok(Post {
+            inner: Arc::new(post),
+        })
     }
 
     pub fn title(&self) -> &str {
@@ -102,7 +104,7 @@ impl Post {
     }
 
     pub fn set_content(&mut self, content: String) {
-        (*Arc::make_mut(&mut self.inner)).content = content;
+        Arc::make_mut(&mut self.inner).content = content;
     }
 
     pub fn slug(&self) -> &str {
@@ -114,13 +116,12 @@ impl Post {
     }
 
     pub fn date(&self) -> DateTime<Utc> {
-        self.inner.date.clone()
+        self.inner.date
     }
 
     pub fn tags(&self) -> Vec<String> {
         self.inner.tags.clone()
     }
-    
 }
 
 impl Object for Post {
@@ -137,80 +138,90 @@ impl Object for Post {
         }
     }
 }
-
 #[cfg(test)]
 mod tests {
     use super::*;
+    use std::fs::File;
+    use std::io::Write;
+    use tempfile::tempdir;
 
-    fn setup_context() -> TimugContext {
-        TimugContext {
-            config: crate::config::TimugConfig {
-                author: "Default Author".to_string(),
-                email: "author@example.com".to_string(),
-                lang: "en".to_string(),
-                ..Default::default()
-            },
-            ..Default::default()
-        }
+    #[test]
+    fn test_load_from_path() {
+        let dir = tempdir().unwrap();
+        let file_path = dir.path().join("test_post.md");
+        let mut file = File::create(&file_path).unwrap();
+        writeln!(
+            file,
+            "---\ntitle: Test Post\ndate: 2023-10-01 12:00:00\nslug: test-post\ntags: [\"rust\", \"test\"]\ndraft: false\n---\nThis is a test post."
+        )
+        .unwrap();
+
+        let post = Post::load_from_path(&file_path).unwrap();
+        assert_eq!(post.title(), "Test Post");
+        assert_eq!(
+            post.date().format(DATE_FORMAT).to_string(),
+            "2023-10-01 12:00:00"
+        );
+        assert_eq!(post.slug(), "test-post");
+        assert_eq!(post.tags(), vec!["rust", "test"]);
+        assert_eq!(post.draft(), false);
+        assert_eq!(post.content(), "This is a test post.\n");
     }
 
     #[test]
-    fn test_load_post_with_metadata() {
-        let context = setup_context();
-        let path = "test_post.md";
-        let content = r#"---
-title: Test Post
-date: 2023-10-01 12:00:00
-tags:
-    - rust
-    - programming
----
-This is the content of the post.
-"#;
-
-        let post = Post::load_from_str(&context, content, path).expect("Failed to load post");
-
-        assert_eq!(post.title, "Test Post");
-        assert_eq!(post.date.to_string(), "2023-10-01 12:00:00 UTC");
-        assert_eq!(post.tags, vec!["rust", "programming"]);
-        assert_eq!(post.content, "<p>This is the content of the post.</p>\n");
+    fn test_load_from_str() {
+        let content = "---\ntitle: Test Post\ndate: 2023-10-01 12:00:00\nslug: test-post\ntags: [\"rust\", \"test\"]\ndraft: false\n---\nThis is a test post.";
+        let path = Path::new("test_post.md");
+        let post = Post::load_from_str(content, path).unwrap();
+        assert_eq!(post.title(), "Test Post");
+        assert_eq!(
+            post.date().format(DATE_FORMAT).to_string(),
+            "2023-10-01 12:00:00"
+        );
+        assert_eq!(post.slug(), "test-post");
+        assert_eq!(post.tags(), vec!["rust", "test"]);
+        assert_eq!(post.draft(), false);
+        assert_eq!(post.content(), "This is a test post.");
     }
 
     #[test]
-    fn test_load_post_without_metadata() {
-        let context = setup_context();
-        let path = "test_post.md";
-        let content = "This is the content of the post.";
-
-        let post = Post::load_from_str(&context, content, path).expect("Failed to load post");
-
-        assert_eq!(post.title, "");
-        assert!(post.tags.is_empty());
-        assert_eq!(post.content, "<p>This is the content of the post.</p>\n");
-        assert_eq!(post.author_name, "Default Author");
-        assert_eq!(post.author_email, "author@example.com");
-        assert_eq!(post.lang, "en");
-        assert_eq!(post.slug, "test_post");
+    fn test_set_content() {
+        let content = "---\ntitle: Test Post\ndate: 2023-10-01 12:00:00\nslug: test-post\ntags: [\"rust\", \"test\"]\ndraft: false\n---\nThis is a test post.";
+        let path = Path::new("test_post.md");
+        let mut post = Post::load_from_str(content, path).unwrap();
+        post.set_content("Updated content.".to_string());
+        assert_eq!(post.content(), "Updated content.");
     }
 
     #[test]
-    fn test_load_post_with_partial_metadata() {
-        let context = setup_context();
-        let path = "test_post.md";
-        let content = r#"---
-title: Test Post
----
-This is the content of the post.
-"#;
+    fn test_object_get_value() {
+        let content = "---\ntitle: Test Post\ndate: 2023-10-01 12:00:00\nslug: test-post\ntags: [\"rust\", \"test\"]\ndraft: false\n---\nThis is a test post.";
+        let path = Path::new("test_post.md");
+        let post = Arc::new(Post::load_from_str(content, path).unwrap());
 
-        let post = Post::load_from_str(&context, content, path).expect("Failed to load post");
-
-        assert_eq!(post.title, "Test Post");
-        assert!(post.tags.is_empty());
-        assert_eq!(post.content, "<p>This is the content of the post.</p>\n");
-        assert_eq!(post.author_name, "Default Author");
-        assert_eq!(post.author_email, "author@example.com");
-        assert_eq!(post.lang, "en");
-        assert_eq!(post.slug, "test_post");
+        assert_eq!(
+            post.get_value(&Value::from("title")).unwrap(),
+            Value::from("Test Post")
+        );
+        assert_eq!(
+            post.get_value(&Value::from("content")).unwrap(),
+            Value::from("This is a test post.")
+        );
+        assert_eq!(
+            post.get_value(&Value::from("date")).unwrap(),
+            Value::from("2023-10-01 12:00:00")
+        );
+        assert_eq!(
+            post.get_value(&Value::from("slug")).unwrap(),
+            Value::from("test-post")
+        );
+        assert_eq!(
+            post.get_value(&Value::from("tags")).unwrap(),
+            Value::from(vec!["rust", "test"])
+        );
+        assert_eq!(
+            post.get_value(&Value::from("draft")).unwrap(),
+            Value::from(false)
+        );
     }
 }
