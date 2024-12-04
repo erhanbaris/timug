@@ -1,4 +1,4 @@
-use std::path::PathBuf;
+use std::{collections::HashMap, path::PathBuf};
 
 use serde::{Deserialize, Serialize};
 
@@ -23,6 +23,18 @@ pub struct TimugConfig {
     pub site_url: String,
     pub author: String,
     pub email: String,
+
+    pub contacts: Vec<Contact>,
+
+    #[serde(flatten)]
+    pub other: HashMap<String, serde_yaml::value::Value>,
+}
+
+#[derive(Debug, Default, PartialEq, Serialize, Deserialize)]
+pub struct Contact {
+    pub icon: String,
+    pub name: String,
+    pub address: String,
 }
 
 fn default_blog_path() -> PathBuf {

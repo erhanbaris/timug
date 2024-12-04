@@ -15,7 +15,7 @@ use anyhow::Result;
 
 use extensions::{
     alertbox::AlertBox, codeblock::Codeblock, fontawesome::FontAwesome, gist::Gist, info::Info,
-    quote::Quote,
+    quote::Quote, social_media_share::SocialMediaShare,
 };
 use template::RenderEngine;
 
@@ -27,6 +27,7 @@ fn main() -> Result<()> {
     engine.register_extension::<AlertBox>()?;
     engine.register_extension::<FontAwesome>()?;
     engine.register_extension::<Info>()?;
+    engine.register_extension::<SocialMediaShare>()?;
     engine.run()?;
     Ok(())
 }

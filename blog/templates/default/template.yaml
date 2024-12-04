@@ -1,0 +1,7 @@
+name: Default template
+pre-process:
+  - npm install -D tailwindcss  
+process:
+  - npx tailwindcss -i style.css -o tailwindcss.css
+  - mv tailwindcss.css ../../public/assets/tailwindcss.css
+post-process: 

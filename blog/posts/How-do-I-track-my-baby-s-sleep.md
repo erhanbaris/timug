@@ -20,7 +20,7 @@ When it became a problem for us to keep track of when we put our baby to sleep, 
 We started by determining the equipment we could use. The cradle we use is like the one below and instead of swinging sideways, it swings up and down.
 
 <figure>
-    <img style="display: block; margin-left: auto; margin-right: auto;" src="/statics/membantu.jpg">  
+    <img style="display: block; margin-left: auto; margin-right: auto;" src="/assets/membantu.jpg">  
     <figcaption style="text-align: center">Membantu Crib</figcaption>
 </figure>
 
@@ -37,7 +37,7 @@ The first thing that came to my mind was to track the crib with a motion sensor,
 
 
 <figure>
-    <img style="display: block; margin-left: auto; margin-right: auto;" src="/statics/SW420-Vibration-Sensor-Module.jpg">  
+    <img style="display: block; margin-left: auto; margin-right: auto;" src="/assets/SW420-Vibration-Sensor-Module.jpg">  
     <figcaption style="text-align: center">sw-420 vibration sensor module</figcaption>
 </figure>
 
@@ -78,7 +78,7 @@ While examining the sensors I had, I decided that I could experiment with the **
 
 
 <figure>
-    <img style="display: block; margin-left: auto; margin-right: auto;" src="/statics/Ultrasonic-Sensor-HC-SR04.jpg">  
+    <img style="display: block; margin-left: auto; margin-right: auto;" src="/assets/Ultrasonic-Sensor-HC-SR04.jpg">  
     <figcaption style="text-align: center">Ultrasonic Sensor HC-SR04</figcaption>
 </figure>
 
@@ -90,7 +90,7 @@ As shown in the figure, the expected distance per second is around 15cm.
 
 
 <figure>
-    <img style="display: block; margin-left: auto; margin-right: auto;" src="/statics/hareket.jpg">  
+    <img style="display: block; margin-left: auto; margin-right: auto;" src="/assets/hareket.jpg">  
     <figcaption style="text-align: center">Cradle Movement</figcaption>
 </figure>
 
@@ -109,7 +109,7 @@ Below is the screenshot of the **Home Assistant** screen.
 
 
 <figure>
-    <img style="display: block; margin-left: auto; margin-right: auto;" src="/statics/home-assistant-sc.jpg">  
+    <img style="display: block; margin-left: auto; margin-right: auto;" src="/assets/home-assistant-sc.jpg">  
     <figcaption style="text-align: center">Home Assistant Screenshot</figcaption>
 </figure>
 
@@ -172,7 +172,7 @@ If anyone is interested, they can check out [{% call fontawesome('fab', 'github'
 {% endcall %}
 
 <figure>
-    <img style="display: block; margin-left: auto; margin-right: auto;" src="/statics/face-mesh.png">  
+    <img style="display: block; margin-left: auto; margin-right: auto;" src="/assets/face-mesh.png">  
     <figcaption style="text-align: center">Face Scanned with Face Mesh</figcaption>
 </figure>
 
@@ -190,7 +190,7 @@ I'm now tracking my baby's sleep more accurately, but there's just one problem l
 
 
 <figure>
-    <img style="display: block; margin-left: auto; margin-right: auto;" src="/statics/home-assistant-sc2.jpg">  
+    <img style="display: block; margin-left: auto; margin-right: auto;" src="/assets/home-assistant-sc2.jpg">  
     <figcaption style="text-align: center">Home Assistant Screenshot</figcaption>
 </figure>
 
@@ -228,7 +228,7 @@ You can access the full source code of the project [{% call fontawesome('fab', '
 I developed a small **script** to monitor the baby's sleep status from the iPhone home screen with the **Scriptable** application.
 
 <figure>
-    <img style="display: block; margin-left: auto; margin-right: auto;" src="/statics/ios-sc.jpg">  
+    <img style="display: block; margin-left: auto; margin-right: auto;" src="/assets/ios-sc.jpg">  
     <figcaption style="text-align: center">IOS Screenshot</figcaption>
 </figure>
 
@@ -244,9 +244,9 @@ _Note_: I do not share the vibration and ultrasonic sensor connection diagrams, 
 
 #### Links
 
-[^1]: https://www.arduino.cc/en/software
-[^2]: https://www.amazon.de/dp/B0754N794H?ref=ppx_yo2ov_dt_b_product_details&th=1
-[^3]: https://www.amazon.de/dp/B08X3GRK22?psc=1&ref=ppx_yo2ov_dt_b_product_details
-[^4]: https://www.amazon.de/dp/B0CDGHV276?psc=1&ref=ppx_yo2ov_dt_b_product_details
-[^5]: https://www.amazon.de/dp/B0B8ZT5HDW?psc=1&ref=ppx_yo2ov_dt_b_product_details
-[^6]: https://developers.google.com/mediapipe
+[^1]: [https://www.arduino.cc/en/software](https://www.arduino.cc/en/software)
+[^2]: [https://www.amazon.de/dp/B0754N794H?ref=ppx_yo2ov_dt_b_product_details&th=1](https://www.amazon.de/dp/B0754N794H?ref=ppx_yo2ov_dt_b_product_details&th=1)
+[^3]: [https://www.amazon.de/dp/B08X3GRK22?psc=1&ref=ppx_yo2ov_dt_b_product_details](https://www.amazon.de/dp/B08X3GRK22?psc=1&ref=ppx_yo2ov_dt_b_product_details)
+[^4]: [https://www.amazon.de/dp/B0CDGHV276?psc=1&ref=ppx_yo2ov_dt_b_product_details](https://www.amazon.de/dp/B0CDGHV276?psc=1&ref=ppx_yo2ov_dt_b_product_details)
+[^5]: [https://www.amazon.de/dp/B0B8ZT5HDW?psc=1&ref=ppx_yo2ov_dt_b_product_details](https://www.amazon.de/dp/B0B8ZT5HDW?psc=1&ref=ppx_yo2ov_dt_b_product_details)
+[^6]: [https://developers.google.com/mediapipe](https://developers.google.com/mediapipe)

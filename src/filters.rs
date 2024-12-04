@@ -7,6 +7,7 @@ const FORMAT: &str = "%Y-%m-%d %H:%M:%S";
 impl<'a> RenderEngine<'a> {
     pub fn build_filters(&mut self) {
         self.env.add_filter("formatdatetime", Self::format_date);
+        self.env.add_filter("url_encode", Self::url_encode);
     }
 
     fn format_date(value: Value, format: Option<Value>) -> Result<Value, Error> {
@@ -29,5 +30,11 @@ impl<'a> RenderEngine<'a> {
         } else {
             Ok("N/A".into())
         }
+    }
+
+    fn url_encode(url: String) -> Result<Value, Error> {
+        use urlencoding::encode;
+        let encoded = encode(&url);
+        Ok(Value::from_safe_string(encoded.to_string()))
     }
 }

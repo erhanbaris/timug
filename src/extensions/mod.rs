@@ -6,6 +6,7 @@ pub mod fontawesome;
 pub mod gist;
 pub mod info;
 pub mod quote;
+pub mod social_media_share;
 
 pub trait Extension<'a> {
     fn name() -> &'static str;

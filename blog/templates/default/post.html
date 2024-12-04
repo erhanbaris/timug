@@ -2,8 +2,8 @@
 {% block body %}
 
 <div class="">
-  <h1 href="#" class="text-gray-900 font-bold text-4xl">{{ post.title }}</h1>
-  <div class="py-5 text-sm font-regular text-gray-900 flex">
+  <h1 href="#" class="text-gray-900 font-header text-4xl">{{ post.title }}</h1>
+  <div class="py-5 text-sm font-regular text-gray-900 flex flex-wrap leading-6">
     <span class="mr-3 flex flex-row items-center">
       <svg class="text-indigo-600" fill="currentColor" height="13px" width="13px" version="1.1" id="Layer_1"
         xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px"
@@ -16,7 +16,7 @@
           </g>
         </g>
       </svg>
-      <span class="ml-1">{{ post.date | formatdatetime("%B %d, %Y") }}</span>
+      <span class="ml-1 text-nowrap text-gray-400">{{ post.date | formatdatetime("%B %d, %Y") }}</span>
     </span>
 
     <a href="#" class="flex flex-row items-center hover:text-indigo-600  mr-3">
@@ -27,10 +27,11 @@
         </path>
         <path d="M0 0h24v24H0z" fill="none"></path>
       </svg>
-      <span class="ml-1">{{ author_name }}</span></a>
+      <span class="ml-1 text-nowrap text-gray-500">{{ author_name }}</span></a>
 
     {%- for tag in post.tags %}
-    <a href="#" class="text-xs text-indigo-600 font-medium hover:text-gray-900 transition duration-500 ease-in-out">
+    <a href="#"
+      class="ml-4 text-xs text-indigo-600 font-medium hover:text-gray-900 transition duration-500 ease-in-out">
       <a href="#" class="flex flex-row items-center hover:text-indigo-600">
         <svg class="text-indigo-600" fill="currentColor" height="16px" aria-hidden="true" role="img" focusable="false"
           xmlns="http://www.w3.org/2000/svg" viewBox="0 0 18 18">
@@ -38,7 +39,7 @@
             d="M15.4496399,8.42490555 L8.66109799,1.63636364 L1.63636364,1.63636364 L1.63636364,8.66081885 L8.42522727,15.44178 C8.57869221,15.5954158 8.78693789,15.6817418 9.00409091,15.6817418 C9.22124393,15.6817418 9.42948961,15.5954158 9.58327627,15.4414581 L15.4486339,9.57610048 C15.7651495,9.25692435 15.7649133,8.74206554 15.4496399,8.42490555 Z M16.6084423,10.7304545 L10.7406818,16.59822 C10.280287,17.0591273 9.65554997,17.3181054 9.00409091,17.3181054 C8.35263185,17.3181054 7.72789481,17.0591273 7.26815877,16.5988788 L0.239976954,9.57887876 C0.0863319284,9.4254126 0,9.21716044 0,9 L0,0.818181818 C0,0.366312477 0.366312477,0 0.818181818,0 L9,0 C9.21699531,0 9.42510306,0.0862010512 9.57854191,0.239639906 L16.6084423,7.26954545 C17.5601275,8.22691012 17.5601275,9.77308988 16.6084423,10.7304545 Z M5,6 C4.44771525,6 4,5.55228475 4,5 C4,4.44771525 4.44771525,4 5,4 C5.55228475,4 6,4.44771525 6,5 C6,5.55228475 5.55228475,6 5,6 Z">
           </path>
         </svg>
-        <span class="ml-1">#{{ tag -}}</span>
+        <span class="ml-1 text-nowrap text-gray-500">#{{ tag -}}</span>
       </a>
     </a>
     {% endfor %}
@@ -46,6 +47,62 @@
   <hr>
   <div class="post">
     {{ post.content|safe }}
+  </div>
+  <hr>
+
+  {%- call social_media_share(post) -%}
+  {%- endcall -%}
+
+  <hr>
+  <div class="grid grid-cols-2 gap-1 mt-5">
+    <!-- Left -->
+    {% set previous_post = posts[index+1] %}
+    {% if posts | length > index+1 %}
+    <a href="{{ post_url(previous_post.lang, previous_post.slug) }}">
+      <div class="flex text-sm group">
+        <div class="flex-none mr-3 flex items-center">
+          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="rotate-180 group-hover:-translate-x-2 transition-transform">
+            <path stroke="none" d="M0 0h24v24H0z" fill="none" class="astro-vj4tpspi"></path>
+            <path d="M9 6l6 6l-6 6" class="astro-vj4tpspi"></path>
+          </svg>
+        </div>
+        <div class="shrink gap-1 text-sm">
+          <div class="text-start font-medium">Previous Post</div>
+          <div class="font-light text-start	text-grey-200">
+            {{ previous_post.title }}
+          </div>
+        </div>
+      </div>
+    </a>
+    {% else %}
+    <div></div>
+    {% endif %}
+    <!-- Left -->
+    <!-- Right -->
+    {% set next_post = posts[index-1] %}
+    {% if index > 0 %}
+    <a href="{{ post_url(next_post.lang, next_post.slug) }}" class="flex justify-end">
+    <div class="flex text-sm group">
+      <div class="shrink gap-1 text-sm">
+        <div class="text-end font-medium">Next Post</div>
+        <div class="font-light text-end	text-grey-200">
+          {{ next_post.title }}
+        </div>
+      </div>
+      <div class="flex-none ml-3 flex items-center">
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+          stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="group-hover:translate-x-2 transition-transform">
+          <path stroke="none" d="M0 0h24v24H0z" fill="none" class="astro-vj4tpspi"></path>
+          <path d="M9 6l6 6l-6 6" class="astro-vj4tpspi"></path>
+        </svg>
+      </div>
+    </div>
+  </a>
+  {% else %}
+  <div></div>
+  {% endif %}
+    <!-- Right -->
   </div>
 </div>
 {% endblock %}

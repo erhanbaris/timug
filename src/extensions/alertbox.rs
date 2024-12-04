@@ -6,6 +6,8 @@ use minijinja::{
     Error, ErrorKind, State, Value,
 };
 
+use crate::tools::parse_yaml;
+
 use super::Extension;
 
 static ALERTBOX_HTML: &str = include_str!("alertbox.html");
@@ -42,7 +44,11 @@ impl Object for AlertBox {
             )
         })?;
 
-        let content = render!(ALERTBOX_HTML, content => content, title => title, style => style);
+        let mut compiled_content = String::new();
+        pulldown_cmark::html::push_html(&mut compiled_content, parse_yaml(content));
+
+        let content =
+            render!(ALERTBOX_HTML, content => compiled_content, title => title, style => style);
         Ok(Value::from_safe_string(content))
     }
 }

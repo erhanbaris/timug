@@ -1,0 +1,24 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+@layer components {
+    h1 {
+        @apply text-gray-900 font-normal text-3xl;
+    }
+    h2 {
+        @apply text-gray-900 font-bold text-lg;
+    }
+    .post > h2 {
+        @apply mt-10 mb-4;
+    }
+    hr {
+        @apply my-6 bg-gray-200;
+    }
+    .post > p {
+        @apply text-lg leading-8 my-5;
+    }
+    .post ol {
+        @apply list-decimal ml-5 text-lg leading-7;
+    }
+
+}

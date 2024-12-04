@@ -1,4 +1,4 @@
-<header class="lg:px-16 px-4 bg-white flex flex-wrap items-center py-4 shadow-md">
+<header class="lg:px-16 px-4 flex flex-wrap items-center shadow-md">
   <div class="flex-1 flex justify-between items-center">
       <a href="/" class="text-xl">{{ blog_name }}</a>
   </div>
@@ -14,7 +14,7 @@
 
   <div class="hidden md:flex md:items-center md:w-auto w-full" id="menu">
       <nav>
-          <ul class="md:flex items-center justify-between text-base text-gray-700 pt-4 md:pt-0">
+          <ul class="md:flex items-center justify-between text-lg text-gray-700 pt-4 md:pt-0">
             {%- for page in pages %}
             {% if page.render %}
             <li><a class="md:p-4 py-3 px-0 block" href="{{ page_url(page.slug) }}">{{ page.title }}</a></li>

@@ -1,13 +1,13 @@
 <section class="mb-8">
   <ul class="flex flex-col divide-y divide-slate-200">
     {%- for post in posts %}
-    <li class="group">
+    <li class="group cursor-pointer rounded-lg hover:bg-neutral-100 active:bg-neutral-50">
       <a class="block px-0 md:px-6 py-4 text-inherit" href="{{ post_url(post.lang, post.slug) }}">
         <div class="summary flex flex-row gap-8 text-slate-700">
           <div class="flex flex-1 flex-col gap-2">
             <time class="text-xs text-slate-500 ">{{ post.date | formatdatetime("%B %d, %Y") }}</time>
             <h2 class="post_title text-balanced mb-0 ">{{ post.title -}}</h2>
-            <p class="text-balanced mb-0 text-slate-600 text-sm/6">{{ post.title -}}</p>
+            <p class="text-balanced mb-0 text-slate-600 text-sm/6">{{ post.description -}}</p>
           </div>
           <div class="my-auto group-hover:translate-x-2 transition-transform">
             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
