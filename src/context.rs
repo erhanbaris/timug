@@ -1,10 +1,18 @@
-use std::path::PathBuf;
+use std::collections::HashSet;
+use std::env::current_dir;
+use std::fs::read_to_string;
 use std::sync::OnceLock;
+use std::{collections::HashMap, path::PathBuf};
 
 use colored::Colorize;
 use minijinja::Value;
+use serde::de::DeserializeOwned;
+use serde_yaml::from_str;
 use std::sync::{RwLock, RwLockReadGuard, RwLockWriteGuard};
 
+use crate::pages::Pages;
+use crate::post::Post;
+use crate::posts::Posts;
 use crate::{config::TimugConfig, template::TemplateConfig};
 
 const TEMPLATES_PATH: &str = "templates";
@@ -27,11 +35,15 @@ pub struct TimugContext {
     pub after_bodies: Vec<&'static str>,
     pub posts_value: Value,
     pub pages_value: Value,
+    pub pages: Pages,
+    pub posts: Posts,
+    pub tags: HashSet<String>,
+    pub tag_posts: HashMap<String, Vec<Post>>,
 }
 
 impl TimugContext {
     fn build(timug_path: Option<String>) -> Self {
-        let current_path = std::env::current_dir().expect("Failed to get current directory");
+        let current_path = current_dir().expect("Failed to get current directory");
         let config_path = match timug_path {
             Some(path) => path.into(),
             None => current_path.join(CONFIG_FILE_NAME),
@@ -42,9 +54,8 @@ impl TimugContext {
             "Reading config file from".purple(),
             config_path.display()
         );
-        let config_content =
-            std::fs::read_to_string(&config_path).expect("Failed to read config file");
-        let config = serde_yaml::from_str(&config_content).expect("Failed to parse config file");
+        let config_content = read_to_string(&config_path).expect("Failed to read config file");
+        let config = from_str(&config_content).expect("Failed to parse config file");
         let templates_path = Self::get_path(&config, TEMPLATES_PATH).join(config.theme.clone());
         let template_config_path = templates_path.join("template.yaml");
 
@@ -54,9 +65,9 @@ impl TimugContext {
             template_config_path.display()
         );
         let template_content =
-            std::fs::read_to_string(&template_config_path).expect("Failed to read config file");
+            read_to_string(&template_config_path).expect("Failed to read config file");
         let template_config: TemplateConfig =
-            serde_yaml::from_str(&template_content).expect("Failed to parse template file");
+            from_str(&template_content).expect("Failed to parse template file");
 
         println!("{:?}", &template_config);
         let posts_path = Self::get_path(&config, POSTS_PATH);
@@ -74,11 +85,23 @@ impl TimugContext {
             after_bodies: Default::default(),
             posts_value: Default::default(),
             pages_value: Default::default(),
+            tags: Default::default(),
+            tag_posts: Default::default(),
+            pages: Default::default(),
+            posts: Default::default(),
         }
     }
 
     fn get_path(config: &TimugConfig, name: &str) -> PathBuf {
         config.blog_path.join(name)
+    }
+
+    pub fn get_config<T: DeserializeOwned>(&self, key: &str) -> Option<T> {
+        let value = self.config.other.get(key)?;
+        if let Ok(config) = serde_yaml::from_value(value.to_owned()) {
+            return Some(config);
+        }
+        None
     }
 }
 

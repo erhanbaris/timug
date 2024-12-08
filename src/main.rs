@@ -14,8 +14,9 @@ mod tools;
 use anyhow::Result;
 
 use extensions::{
-    alertbox::AlertBox, codeblock::Codeblock, fontawesome::FontAwesome, gist::Gist, info::Info,
-    quote::Quote, social_media_share::SocialMediaShare,
+    alertbox::AlertBox, codeblock::Codeblock, contacts::Contacts, fontawesome::FontAwesome,
+    gist::Gist, info::Info, projects::Projects, quote::Quote, reading::Reading,
+    social_media_share::SocialMediaShare,
 };
 use template::RenderEngine;
 
@@ -28,6 +29,9 @@ fn main() -> Result<()> {
     engine.register_extension::<FontAwesome>()?;
     engine.register_extension::<Info>()?;
     engine.register_extension::<SocialMediaShare>()?;
+    engine.register_extension::<Reading>()?;
+    engine.register_extension::<Projects>()?;
+    engine.register_extension::<Contacts>()?;
     engine.run()?;
     Ok(())
 }

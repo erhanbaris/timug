@@ -5,35 +5,47 @@
     <meta name="description" content="{{ config.description }}" />
     <meta charset="utf-8">
     <title>{{ config.name }}</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <meta name="author" content="">
     {% block metas %}{% endblock %}
     {% block links %}{% endblock %}
     {% block scripts %}{% endblock %}
     <link rel="stylesheet" href="/assets/tailwindcss.css">
-    <link rel="stylesheet" href="/assets/style.css">
-    
+
     <!-- Extension headers -->
     {%- for header in headers %}
-        {{ header | safe }}
+    {{ header | safe }}
     {% endfor %}
     <!-- Extension headers -->
-     
+
     <link href="https://fonts.cdnfonts.com/css/segoe-ui-4" rel="stylesheet">
-    <link href="https://fonts.cdnfonts.com/css/proxima-nova-condensed" rel="stylesheet">   
-    <link href="https://fonts.cdnfonts.com/css/rogan" rel="stylesheet">
-    <link href="https://fonts.cdnfonts.com/css/uni-neue" rel="stylesheet">         
+    <link href="https://fonts.cdnfonts.com/css/proxima-nova-condensed" rel="stylesheet">
+    <link href="https://fonts.cdnfonts.com/css/roboto" rel="stylesheet">
+    <link href="https://fonts.cdnfonts.com/css/fjalla-one-2" rel="stylesheet">
+
 </head>
 
 <body data-theme="light">
     <div class="flex flex-col h-screen justify-between">
         {%- include "header.html" %}
 
-        <main class="relative p-4">
-            <div class="max-w-3xl mx-auto">
+        <main class="relative p-2 md:p-4 flex flex-col sm:flex-row gab-1 md:gap-4 lg:grid-cols-3 lg:gap-4 xl:gap-8">
+            <div class="flex-1">
+                {% block left %}
+                {%- include "_left_panel.html" %}
+                {% endblock %}
+            </div>
+            <div class="flex-1 border-slate-200 bg-white px-3 2xl:px-10 pb-10">
                 <div
-                    class="mt-3 rounded-b lg:rounded-b-none lg:rounded-r flex flex-col justify-between leading-normal">
+                    class="mt-3 flex flex-col justify-between leading-normal body-width">
                     {% block body %}{% endblock %}
+                </div>
+            </div>
+            <div class="flex-1">
+                <div class="side-panel">
+                    {% block right %}
+                    {%- include "_right_panel.html" %}
+                    {% endblock %}
                 </div>
             </div>
         </main>
@@ -42,7 +54,8 @@
 </body>
 <!-- Extension after body -->
 {%- for after_body in after_bodies %}
-    {{ after_body | safe }}
+{{ after_body | safe }}
 {% endfor %}
 <!-- Extension after body -->
+
 </html>

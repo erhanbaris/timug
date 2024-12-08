@@ -3,22 +3,62 @@
 @tailwind utilities;
 @layer components {
     h1 {
-        @apply text-gray-900 font-normal text-3xl;
+        @apply text-gray-900 font-normal text-base md:text-xl;
     }
     h2 {
-        @apply text-gray-900 font-bold text-lg;
+        @apply text-gray-900 font-bold text-base md:text-lg;
     }
     .post > h2 {
-        @apply mt-10 mb-4;
+        @apply mt-4 md:mt-10 mb-2 text-lg md:text-2xl md:mb-4;
     }
     hr {
-        @apply my-6 bg-gray-200;
+        @apply my-3 md:my-6 bg-gray-200;
     }
     .post > p {
-        @apply text-lg leading-8 my-5;
+        @apply text-base md:text-lg leading-8 my-5;
     }
     .post ol {
-        @apply list-decimal ml-5 text-lg leading-7;
+        @apply list-decimal ml-2 md:ml-5 text-base md:text-lg leading-7;
+    }
+    .post ul {
+        @apply list-disc text-wrap ml-2 md:ml-5 text-base md:text-lg leading-7;
+    }
+    .post li {
+        @apply mt-2 text-wrap;
     }
 
+    .not-found {
+        @apply text-gray-900 mt-10 text-center	 font-normal text-base md:text-xl;
+    }
+
+    .body-width {
+        @apply md:max-w-body md:w-body lg:max-w-lg-body lg:w-lg-body xl:max-w-xl-body xl:w-xl-body 2xl:max-w-2xl-body 2xl:w-2xl-body;
+    }
+    blockquote {
+        @apply text-lg md:text-2xl uppercase font-bold bg-gradient-to-b from-[#fd0b58] to-[#a32b68] bg-clip-text text-transparent leading-normal;
+
+        &:before {
+            content: "";
+        }
+    
+        &:after {
+            content: "";
+        }
+    }
+
+    blockquote.left {
+        @apply max-w-40 md:max-w-80 float-left my-3 md:my-5 mr-1.5 md:mr-2.5;
+    }
+    
+    blockquote.center {
+        @apply my-3 md:my-5;
+    }
+    
+    blockquote.right {
+        @apply max-w-40 md:max-w-80 float-right my-1.5 md:my-2.5 ml-3 md:ml-5;
+    }
+
+    .side-panel {
+        @apply bg-[#f0bf6d]/50 rounded-lg m-3 p-4 md:p-6 flex flex-col justify-between leading-normal;
+    }
 }

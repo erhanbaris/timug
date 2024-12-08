@@ -5,20 +5,6 @@ order: 0
 
 {% extends "base.html" %}
 {% block body %}
-{% set contacts_length = config.contacts|length %}
-
-{% if contacts_length > 0 %}
-<div class="mb-10">
-  <div class="columns is-centered column is-full">
-    Find me on
-    {%- for contact in config.contacts %}
-    <a class="hover:text-sky-700" href="{{ contact.link }}">
-      <i class="ml-1 mr-0.5 {{ contact.icon }}"></i>{% if contacts_length == loop.index %}.{% elif contacts_length-1 == loop.index %} and{% else %},{% endif %}</a>
-    {% endfor %}
-  </div>
-</div>
-{% endif %}
-
 <div class="content">
     <h1 class="columns is-centered column is-full">Posts</h1>
     {%- include "_partial_posts.html" %}

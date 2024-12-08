@@ -35,6 +35,9 @@ pub struct Page {
     #[serde(default)]
     pub order: i32,
 
+    #[serde(default)]
+    pub hide: bool,
+
     #[serde(flatten)]
     other: HashMap<String, serde_yaml::value::Value>,
 }

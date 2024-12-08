@@ -4,17 +4,17 @@ use std::{
     path::{Path, PathBuf},
 };
 
-use anyhow::Context;
 use chrono::Datelike;
 use colored::Colorize;
 use minijinja::{context, path_loader, Environment, Value};
 use run_shell::cmd;
 use serde::{Deserialize, Serialize};
+use unidecode::unidecode;
 
 use crate::{
     context::{get_context, get_mut_context},
     extensions::Extension,
-    pages::{Pages, POST_HTML},
+    pages::{Pages, POSTS_HTML, POST_HTML},
     posts::Posts,
     tools::parse_yaml,
 };
@@ -49,6 +49,7 @@ impl<'a> RenderEngine<'a> {
 
         self.generate_pages()?;
         self.generate_posts()?;
+        self.generate_tags()?;
 
         self.move_statics()?;
         self.template_process();
@@ -108,9 +109,7 @@ impl<'a> RenderEngine<'a> {
     }
 
     pub fn parse_posts(&mut self) -> anyhow::Result<()> {
-        let ctx = get_context();
-        self.posts = Posts::load(&ctx.posts_path)?;
-        drop(ctx);
+        self.posts = Posts::load()?;
 
         let mut ctx = get_mut_context();
         ctx.posts_value = Value::from_object(self.posts.clone());
@@ -127,7 +126,8 @@ impl<'a> RenderEngine<'a> {
             self.env
                 .add_template_owned(page.path.clone(), page.content.clone())?;
         }
-        ctx.pages_value = Value::from_object(pages);
+        ctx.pages_value = Value::from_object(pages.clone());
+        ctx.pages = pages;
         Ok(())
     }
 
@@ -145,13 +145,7 @@ impl<'a> RenderEngine<'a> {
             Ok(())
         };
 
-        let posts = ctx
-            .posts_value
-            .as_object()
-            .and_then(|obj| obj.downcast_ref::<Posts>())
-            .context("'posts' is not a Posts type".to_string())?;
-
-        for (index, post) in posts.items.iter().enumerate() {
+        for (index, post) in ctx.posts.items.iter().enumerate() {
             if post.draft() {
                 continue;
             }
@@ -167,7 +161,7 @@ impl<'a> RenderEngine<'a> {
             println!("{}: {}", "Compiling".yellow(), post.slug());
 
             if post.content().contains("{%") {
-                let context = context!(config => ctx.config, post => Value::from_object(post.clone()), posts => ctx.posts_value, pages => ctx.pages_value, active_page => "posts");
+                let context = context!(config => ctx.config, post => Value::from_object(post.clone()), posts => ctx.posts_value, pages => ctx.pages_value, tags => ctx.tags, tag_posts => ctx.tag_posts, active_page => "posts");
                 let content = self.env.render_str(post.content(), &context)?;
                 post.set_content(content);
             }
@@ -177,9 +171,37 @@ impl<'a> RenderEngine<'a> {
             post.set_content(content);
 
             let template = self.env.get_template(POST_HTML)?;
-            let context = context!(config => ctx.config, post => Value::from_object(post.clone()), headers => ctx.headers, after_bodies => ctx.after_bodies, posts => ctx.posts_value, pages => ctx.pages_value, active_page => "posts", index => index);
+            let context = context!(config => ctx.config, post => Value::from_object(post.clone()), headers => ctx.headers, after_bodies => ctx.after_bodies, tags => ctx.tags, tag_posts => ctx.tag_posts, posts => ctx.posts_value, pages => ctx.pages_value, active_page => "posts", index => index);
             let content = template.render(context)?;
             generate_path(&file_path)?;
+            self.compress_and_write(content, &file_name)?;
+
+            println!("{}: {}", "Generated".green(), file_name.display());
+        }
+
+        Ok(())
+    }
+
+    pub fn generate_tags(&mut self) -> anyhow::Result<()> {
+        let ctx = get_context();
+        let deployment_folder = ctx.config.blog_path.join(&ctx.config.deployment_folder);
+        let file_path = deployment_folder.join("tags");
+        std::fs::create_dir_all(&file_path)?;
+
+        for (index, (tag, posts)) in ctx.tag_posts.iter().enumerate() {
+            let tag = unidecode(tag).replace([' ', '\r', '\n', '\t'], "-");
+
+            let file_name = file_path.join(format!("{}.html", tag.to_lowercase()));
+
+            println!("{}: tags/{}.html", "Compiling".yellow(), tag);
+
+            let posts = Value::from_object(Posts {
+                items: posts.clone().into(),
+            });
+
+            let template = self.env.get_template(POSTS_HTML)?;
+            let context = context!(config => ctx.config, headers => ctx.headers, after_bodies => ctx.after_bodies, tags => ctx.tags, tag_posts => ctx.tag_posts, posts => posts, pages => ctx.pages_value, active_page => "tags", index => index);
+            let content = template.render(context)?;
             self.compress_and_write(content, &file_name)?;
 
             println!("{}: {}", "Generated".green(), file_name.display());
@@ -215,20 +237,14 @@ impl<'a> RenderEngine<'a> {
 
     pub fn generate_pages(&mut self) -> anyhow::Result<()> {
         let ctx = get_context();
-        let pages = ctx
-            .pages_value
-            .as_object()
-            .and_then(|obj| obj.downcast_ref::<Pages>())
-            .context("'pages' is not a Pages type".to_string())?;
-
-        for page in pages.items.iter() {
+        for page in ctx.pages.items.iter() {
             if !page.render {
                 continue;
             }
 
             let template = self.env.get_template(&page.path)?;
             println!("{}: {}", "Rendering".yellow(), page.path);
-            let content = template.render(context!(config => ctx.config, headers => ctx.headers, after_bodies => ctx.after_bodies, posts => ctx.posts_value, pages => ctx.pages_value, active_page => page))?;
+            let content = template.render(context!(config => ctx.config, headers => ctx.headers, after_bodies => ctx.after_bodies, posts => ctx.posts_value, pages => ctx.pages_value, tags => ctx.tags, tag_posts => ctx.tag_posts, active_page => page))?;
 
             let file_path = ctx
                 .config

@@ -17,7 +17,8 @@ const INDEX_HTML: &str = "index.html";
 const FOOTER_HTML: &str = "footer.html";
 const HEADER_HTML: &str = "header.html";
 pub const POST_HTML: &str = "post.html";
-const POSTS_HTML: &str = "posts.html";
+pub const POSTS_HTML: &str = "posts.html";
+pub const _404_HTML: &str = "404.html";
 
 const TEMPLATE_HTMLS: [&str; 6] = [
     BASE_HTML,
@@ -37,6 +38,7 @@ impl Pages {
     pub fn load_base_pages(&mut self, template_path: &Path) -> anyhow::Result<()> {
         self.build_base_template(template_path, INDEX_HTML, true)?;
         self.build_base_template(template_path, POSTS_HTML, true)?;
+        self.build_base_template(template_path, _404_HTML, true)?;
 
         TEMPLATE_HTMLS.iter().for_each(|name| {
             self.build_base_template(template_path, name, false)
