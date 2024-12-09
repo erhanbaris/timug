@@ -1,8 +1,7 @@
 use chrono::NaiveDateTime;
 use minijinja::{Error, ErrorKind, Value};
-use unidecode::unidecode;
 
-use crate::template::RenderEngine;
+use crate::{engine::RenderEngine, tools::url_encode};
 const FORMAT: &str = "%Y-%m-%d %H:%M:%S";
 
 impl<'a> RenderEngine<'a> {
@@ -34,9 +33,6 @@ impl<'a> RenderEngine<'a> {
     }
 
     fn url_encode(url: String) -> Result<Value, Error> {
-        use urlencoding::encode;
-        let url = unidecode(&url.to_lowercase()).replace([' ', '\r', '\n', '\t'], "-");
-        let encoded = encode(&url);
-        Ok(Value::from_safe_string(encoded.to_string()))
+        Ok(Value::from_safe_string(url_encode(url)))
     }
 }

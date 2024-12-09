@@ -29,13 +29,17 @@ impl Posts {
                 } else {
                     ctx.tag_posts.insert(tag.clone(), vec![post.clone()]);
                 }
-                ctx.tags.insert(tag);
+
+                if !ctx.tags.iter().any(|item| item.eq(&tag)) {
+                    ctx.tags.push(tag);
+                }
             }
 
             items.push(post);
             println!("{}: {}", "Parsed".green(), file.display());
         }
 
+        ctx.tags.sort();
         items.sort_by_key(|b| std::cmp::Reverse(b.date()));
 
         Ok(Self {

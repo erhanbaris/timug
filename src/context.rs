@@ -1,4 +1,3 @@
-use std::collections::HashSet;
 use std::env::current_dir;
 use std::fs::read_to_string;
 use std::sync::OnceLock;
@@ -10,10 +9,11 @@ use serde::de::DeserializeOwned;
 use serde_yaml::from_str;
 use std::sync::{RwLock, RwLockReadGuard, RwLockWriteGuard};
 
+use crate::config::TimugConfig;
 use crate::pages::Pages;
 use crate::post::Post;
 use crate::posts::Posts;
-use crate::{config::TimugConfig, template::TemplateConfig};
+use crate::template::Template;
 
 const TEMPLATES_PATH: &str = "templates";
 const POSTS_PATH: &str = "posts";
@@ -26,8 +26,6 @@ static CONTEXT: OnceLock<RwLock<TimugContext>> = OnceLock::new();
 #[derive(Debug, Default)]
 pub struct TimugContext {
     pub config: TimugConfig,
-    pub template_config: TemplateConfig,
-    pub templates_path: PathBuf,
     pub posts_path: PathBuf,
     pub pages_path: PathBuf,
     pub statics_path: PathBuf,
@@ -37,8 +35,9 @@ pub struct TimugContext {
     pub pages_value: Value,
     pub pages: Pages,
     pub posts: Posts,
-    pub tags: HashSet<String>,
+    pub tags: Vec<String>,
     pub tag_posts: HashMap<String, Vec<Post>>,
+    pub template: Template,
 }
 
 impl TimugContext {
@@ -57,27 +56,15 @@ impl TimugContext {
         let config_content = read_to_string(&config_path).expect("Failed to read config file");
         let config = from_str(&config_content).expect("Failed to parse config file");
         let templates_path = Self::get_path(&config, TEMPLATES_PATH).join(config.theme.clone());
-        let template_config_path = templates_path.join("template.yaml");
+        let template = Template::new(templates_path.clone()).unwrap();
 
-        println!(
-            "{}: {}",
-            "Reading template config from".purple(),
-            template_config_path.display()
-        );
-        let template_content =
-            read_to_string(&template_config_path).expect("Failed to read config file");
-        let template_config: TemplateConfig =
-            from_str(&template_content).expect("Failed to parse template file");
-
-        println!("{:?}", &template_config);
         let posts_path = Self::get_path(&config, POSTS_PATH);
         let pages_path = Self::get_path(&config, PAGES_PATH);
         let statics_path = Self::get_path(&config, ASSETS_PATH);
 
         Self {
             config,
-            templates_path,
-            template_config,
+            template,
             posts_path,
             pages_path,
             statics_path,
@@ -102,6 +89,14 @@ impl TimugContext {
             return Some(config);
         }
         None
+    }
+
+    pub fn get_template_page<'a>(&'a self, name: &str, default_html: &'a str) -> &'a str {
+        if let Some(page) = self.pages.get(name) {
+            &page.content
+        } else {
+            default_html
+        }
     }
 }
 

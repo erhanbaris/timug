@@ -2,6 +2,7 @@ use std::path::{Path, PathBuf};
 
 use anyhow::Context;
 use pulldown_cmark::{Options, Parser};
+use unidecode::unidecode;
 
 use crate::error::TimugError;
 
@@ -61,13 +62,20 @@ pub fn parse_yaml(content: &'_ str) -> Parser<'_> {
     pulldown_cmark::Parser::new_ext(content, opts)
 }
 
+pub fn url_encode(url: String) -> String {
+    use urlencoding::encode;
+    let url = unidecode(&url.to_lowercase()).replace([' ', '\r', '\n', '\t'], "-");
+    let encoded = encode(&url);
+    encoded.to_string()
+}
+
 #[derive(Debug)]
 pub struct FrontMatterInfo<'a> {
     pub metadata: Option<&'a str>,
     pub content: &'a str,
 }
 
-pub fn yaml_front_matter(content: &'_ str) -> FrontMatterInfo<'_> {
+pub fn parse_yaml_front_matter(content: &'_ str) -> FrontMatterInfo<'_> {
     let mut front_matter_started = false;
     let mut front_matter_found = false;
     let mut front_matter_start_position = 0;
@@ -157,7 +165,7 @@ mod tests {
     #[test]
     fn test_yaml_front_matter() {
         let content = "---\nkey: value\n---\n# Heading\n";
-        let front_matter_info = yaml_front_matter(content);
+        let front_matter_info = parse_yaml_front_matter(content);
         assert_eq!(front_matter_info.metadata, Some("key: value"));
         assert_eq!(front_matter_info.content, "# Heading\n");
     }
@@ -165,7 +173,7 @@ mod tests {
     #[test]
     fn test_yaml_front_matter_no_metadata() {
         let content = "# Heading\n";
-        let front_matter_info = yaml_front_matter(content);
+        let front_matter_info = parse_yaml_front_matter(content);
         assert_eq!(front_matter_info.metadata, None);
         assert_eq!(front_matter_info.content, "# Heading\n");
     }

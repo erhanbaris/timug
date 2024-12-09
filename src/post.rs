@@ -9,7 +9,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::{
     error::TimugError,
-    tools::{get_file_content, yaml_front_matter},
+    tools::{get_file_content, parse_yaml_front_matter},
 };
 const DATE_FORMAT: &str = "%Y-%m-%d %H:%M:%S";
 
@@ -71,7 +71,7 @@ impl Post {
     }
 
     pub fn load_from_str(content: &str, path: &Path) -> Result<Self, TimugError> {
-        let front_matter = yaml_front_matter(content);
+        let front_matter = parse_yaml_front_matter(content);
         let mut post: InnerPost = serde_yaml::from_str(front_matter.metadata.unwrap_or_default())
             .unwrap_or_else(|_| {
                 panic!(

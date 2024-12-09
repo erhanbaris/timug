@@ -1,7 +1,4 @@
-use std::{
-    path::{Path, PathBuf},
-    sync::Arc,
-};
+use std::sync::Arc;
 
 use colored::Colorize;
 use minijinja::{
@@ -10,24 +7,10 @@ use minijinja::{
 };
 use serde::{Deserialize, Serialize};
 
-use crate::{page::Page, tools::get_files};
+use crate::{context::get_context, page::Page, tools::get_files};
 
-const BASE_HTML: &str = "base.html";
-const INDEX_HTML: &str = "index.html";
-const FOOTER_HTML: &str = "footer.html";
-const HEADER_HTML: &str = "header.html";
 pub const POST_HTML: &str = "post.html";
 pub const POSTS_HTML: &str = "posts.html";
-pub const _404_HTML: &str = "404.html";
-
-const TEMPLATE_HTMLS: [&str; 6] = [
-    BASE_HTML,
-    INDEX_HTML,
-    FOOTER_HTML,
-    HEADER_HTML,
-    POST_HTML,
-    POSTS_HTML,
-];
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 pub struct Pages {
@@ -35,15 +18,14 @@ pub struct Pages {
 }
 
 impl Pages {
-    pub fn load_base_pages(&mut self, template_path: &Path) -> anyhow::Result<()> {
-        self.build_base_template(template_path, INDEX_HTML, true)?;
-        self.build_base_template(template_path, POSTS_HTML, true)?;
-        self.build_base_template(template_path, _404_HTML, true)?;
+    pub fn load_base_pages(&mut self) -> anyhow::Result<()> {
+        let ctx = get_context();
+        let html_files = get_files(&ctx.template.path, "html")?;
 
-        TEMPLATE_HTMLS.iter().for_each(|name| {
-            self.build_base_template(template_path, name, false)
-                .unwrap();
-        });
+        for html_path in html_files.iter() {
+            self.items.push(Page::load_from_path(html_path)?);
+            println!("{}: {}", "Parsed".green(), html_path.display());
+        }
 
         self.items
             .sort_unstable_by_key(|item| (item.title.clone(), item.slug.clone()));
@@ -51,22 +33,9 @@ impl Pages {
         Ok(())
     }
 
-    fn build_base_template(
-        &mut self,
-        templates_path: &Path,
-        name: &str,
-        render: bool,
-    ) -> anyhow::Result<()> {
-        let file = templates_path.join(name);
-        let mut page = Page::load_from_path(&file)?;
-        page.render = page.render || render;
-        self.items.push(page);
-        println!("{}: {}", "Parsed".green(), file.display());
-        Ok(())
-    }
-
-    pub fn load_custom_pages(&mut self, path: &PathBuf) -> anyhow::Result<()> {
-        let files = get_files(path, "html")?;
+    pub fn load_custom_pages(&mut self) -> anyhow::Result<()> {
+        let ctx = get_context();
+        let files = get_files(&ctx.pages_path, "html")?;
 
         for file in files {
             let mut page = Page::load_from_path(&file)?;
@@ -79,6 +48,10 @@ impl Pages {
             .sort_unstable_by_key(|item| (item.order, item.title.clone()));
 
         Ok(())
+    }
+
+    pub fn get(&self, name: &str) -> Option<&Page> {
+        self.items.iter().find(|page| page.file_name == name)
     }
 }
 

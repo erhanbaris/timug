@@ -7,7 +7,7 @@ use std::{
 use minijinja::{value::Object, Value};
 use serde::{Deserialize, Serialize};
 
-use crate::tools::{get_file_content, get_file_name, get_path, yaml_front_matter};
+use crate::tools::{get_file_content, get_file_name, get_path, parse_yaml_front_matter};
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 pub struct Page {
@@ -24,9 +24,6 @@ pub struct Page {
     pub slug: String,
 
     #[serde(default)]
-    pub custom_page: bool,
-
-    #[serde(default)]
     pub content: String,
 
     #[serde(default)]
@@ -35,8 +32,8 @@ pub struct Page {
     #[serde(default)]
     pub order: i32,
 
-    #[serde(default)]
-    pub hide: bool,
+    #[serde(default, rename = "no-listing")]
+    pub no_listing: bool,
 
     #[serde(flatten)]
     other: HashMap<String, serde_yaml::value::Value>,
@@ -49,17 +46,11 @@ impl Page {
     }
 
     pub fn load_from_str(content: &str, path: &Path) -> anyhow::Result<Self> {
-        let front_matter = yaml_front_matter(content);
+        let front_matter = parse_yaml_front_matter(content);
+        let metadata = front_matter.metadata.unwrap_or_default();
+        let mut page = serde_yaml::from_str::<'_, Page>(metadata)?;
 
-        let mut page: Page = serde_yaml::from_str(front_matter.metadata.unwrap_or_default())
-            .unwrap_or_else(|error| {
-                panic!(
-                    "Failed to parse page metadata information ({}, {:?})",
-                    path.display(),
-                    error
-                )
-            });
-
+        // Page details
         page.content = front_matter.content.to_string();
         page.file_name = get_file_name(path)?;
         page.path = get_path(path)?;
@@ -107,7 +98,7 @@ impl Object for Page {
             "slug" => Some(Value::from(&self.slug)),
             "path" => Some(Value::from(&self.path)),
             "render" => Some(Value::from(self.render)),
-            "custom_page" => Some(Value::from(self.custom_page)),
+            "no_listing" => Some(Value::from(self.no_listing)),
             _ => None,
         }
     }

@@ -1,5 +1,6 @@
 mod config;
 mod context;
+mod engine;
 mod error;
 mod extensions;
 mod filters;
@@ -13,12 +14,12 @@ mod tools;
 
 use anyhow::Result;
 
+use engine::RenderEngine;
 use extensions::{
     alertbox::AlertBox, codeblock::Codeblock, contacts::Contacts, fontawesome::FontAwesome,
     gist::Gist, info::Info, projects::Projects, quote::Quote, reading::Reading,
     social_media_share::SocialMediaShare,
 };
-use template::RenderEngine;
 
 fn main() -> Result<()> {
     let mut engine = RenderEngine::new();

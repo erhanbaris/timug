@@ -1,7 +1,7 @@
 use chrono::Datelike;
 use minijinja::{Error, ErrorKind, State, Value};
 
-use crate::{context::get_context, pages::Pages, posts::Posts, template::RenderEngine};
+use crate::{context::get_context, engine::RenderEngine, pages::Pages, posts::Posts};
 
 impl<'a> RenderEngine<'a> {
     pub fn build_functions(&mut self) {
