@@ -6,10 +6,11 @@ use minijinja::{
     Error, ErrorKind, State, Value,
 };
 
+use crate::context::get_context;
+
 use super::Extension;
 
-static QUOTE_HTML: &str =
-    r#"<blockquote class="my-5 {{ position }}">{{ content | safe }}</blockquote>"#;
+static HTML: &str = r#"<blockquote class="my-5 {{ position }}">{{ content | safe }}</blockquote>"#;
 
 pub struct Quote;
 
@@ -33,6 +34,7 @@ impl Object for Quote {
     fn call(self: &Arc<Self>, state: &State<'_, '_>, args: &[Value]) -> Result<Value, Error> {
         let (position, kwargs): (Option<&str>, Kwargs) = from_args(args)?;
 
+        let ctx = get_context();
         let position = match position {
             Some("left") => "left".to_string(),
             Some("right") => "right".to_string(),
@@ -49,7 +51,8 @@ impl Object for Quote {
             )
         })?;
 
-        let content = render!(QUOTE_HTML, content => content, position => position);
+        let html = &ctx.get_template_page("quote.html", HTML);
+        let content = render!(html, content => content, position => position);
         Ok(Value::from_safe_string(content))
     }
 }

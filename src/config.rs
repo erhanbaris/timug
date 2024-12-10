@@ -7,7 +7,7 @@ pub struct TimugConfig {
     pub title: String,
     pub description: String,
 
-    #[serde(default = "default_blog_path")]
+    #[serde(default = "default_blog_path", rename = "blog-path")]
     pub blog_path: PathBuf,
 
     #[serde(default = "default_language")]
@@ -16,10 +16,10 @@ pub struct TimugConfig {
     #[serde(default = "default_theme")]
     pub theme: String,
 
-    #[serde(default = "default_deployment_folder")]
+    #[serde(default = "default_deployment_folder", rename = "deployment-folder")]
     pub deployment_folder: PathBuf,
 
-    #[serde(default)]
+    #[serde(default, rename = "site-url")]
     pub site_url: String,
     pub author: String,
     pub email: String,

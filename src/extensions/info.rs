@@ -6,11 +6,11 @@ use minijinja::{
     Error, ErrorKind, State, Value,
 };
 
-use crate::tools::parse_yaml;
+use crate::{context::get_context, tools::parse_yaml};
 
 use super::Extension;
 
-static INFO_HTML: &str = include_str!("info.html");
+static HTML: &str = include_str!("info.html");
 
 pub struct Info;
 
@@ -34,6 +34,7 @@ impl Object for Info {
     fn call(self: &Arc<Self>, state: &State<'_, '_>, args: &[Value]) -> Result<Value, Error> {
         let (_, kwargs): (Option<&str>, Kwargs) = from_args(args)?;
 
+        let ctx = get_context();
         let caller: Value = kwargs.get("caller")?;
         let content = caller.call(state, args!())?;
 
@@ -47,7 +48,8 @@ impl Object for Info {
         let mut compiled_content = String::new();
         pulldown_cmark::html::push_html(&mut compiled_content, parse_yaml(content));
 
-        let content = render!(INFO_HTML, content => compiled_content);
+        let html = &ctx.get_template_page("info.html", HTML);
+        let content = render!(html, content => compiled_content);
         Ok(Value::from_safe_string(content))
     }
 }

@@ -2,6 +2,16 @@
 name = "timug"
 version = "0.1.0"
 edition = "2021"
+authors = ["Erhan BARIS <erhanbaris@gmail.com>"]
+description = """
+It has been created for personal blog creation purpose. Timus has its limits, but it fulfills the purposes for which it was created.
+"""
+documentation = "https://github.com/erhanbaris/timug"
+homepage = "https://github.com/erhanbaris/timug"
+repository = "https://github.com/erhanbaris/timug"
+keywords = ["blog", "static-page", "static-page-generator"]
+categories = ["command-line-utilities", "text-processing"]
+license = "GNU General Public License, version 2"
 
 [dependencies]
 anyhow = "1.0.93"

@@ -6,9 +6,11 @@ use minijinja::{
     Error, ErrorKind, State, Value,
 };
 
+use crate::context::get_context;
+
 use super::Extension;
 
-static CODEBLOCK_HTML: &str = "<pre>
+static HTML: &str = "<pre>
   <code class=\"language-{{lang}}\">{{ content | safe }}</code>
 </pre>";
 
@@ -34,6 +36,7 @@ impl Object for Codeblock {
     fn call(self: &Arc<Self>, state: &State<'_, '_>, args: &[Value]) -> Result<Value, Error> {
         let (lang, kwargs): (&str, Kwargs) = from_args(args)?;
 
+        let ctx = get_context();
         let caller: Value = kwargs.get("caller")?;
         let content = caller.call(state, args!())?;
 
@@ -47,7 +50,8 @@ impl Object for Codeblock {
             })?
             .trim();
 
-        let content = render!(CODEBLOCK_HTML, content => content, lang => lang);
+        let html = &ctx.get_template_page("codeblock.html", HTML);
+        let content = render!(html, content => content, lang => lang);
         Ok(Value::from_safe_string(content))
     }
 }

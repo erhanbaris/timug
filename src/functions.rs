@@ -1,7 +1,7 @@
 use chrono::Datelike;
 use minijinja::{Error, ErrorKind, State, Value};
 
-use crate::{context::get_context, engine::RenderEngine, pages::Pages, posts::Posts};
+use crate::{engine::RenderEngine, pages::Pages, posts::Posts};
 
 impl<'a> RenderEngine<'a> {
     pub fn build_functions(&mut self) {
@@ -49,11 +49,9 @@ impl<'a> RenderEngine<'a> {
             }
         };
 
-        let ctx = get_context();
         let date = post.date();
         Ok(Value::from_safe_string(format!(
-            "{}/{}/{}/{}/{}.html",
-            ctx.config.site_url,
+            "/{}/{}/{}/{}.html",
             date.year(),
             date.month(),
             date.day(),
@@ -95,10 +93,6 @@ impl<'a> RenderEngine<'a> {
             }
         };
 
-        let ctx = get_context();
-        Ok(Value::from_safe_string(format!(
-            "{}/{}.html",
-            ctx.config.site_url, page.slug
-        )))
+        Ok(Value::from_safe_string(format!("/{}.html", page.slug)))
     }
 }

@@ -43,7 +43,8 @@ impl Object for Projects {
         let ctx = get_context();
         if let Some(projects) = ctx.get_config::<Vec<ProjectsInfo>>(Self::name()) {
             let env = state.env();
-            let content = render!(in env, HTML, projects => projects);
+            let html = &ctx.get_template_page("projects.html", HTML);
+            let content = render!(in env, html, projects => projects);
             return Ok(Value::from_safe_string(content));
         }
 

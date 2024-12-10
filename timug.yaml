@@ -1,11 +1,11 @@
 title: Erhan Baris's Blog
 description: Erhan Baris's Blog
 theme: default
-deployment_folder: public
-blog_path: /Users/erhanbaris/ClionProjects/timug/blog/
+deployment-folder: public
+blog-path: /Users/erhanbaris/ClionProjects/timug/blog/
 author: Erhan Baris
 email: erhanbaris@gmail.com
-site_url: http://localhost:8000
+site-url: http://localhost:8000
 
 contacts:
   - icon: fas fa-at
@@ -26,6 +26,8 @@ reading:
   link: https://www.goodreads.com/book/show/33257757-iron-gold
 
 projects:
+  - name: Timug Static Page Generator
+    link: https://github.com/erhanbaris/timug
   - name: OneResume.IO
     link: https://www.oneresume.io/
   - name: SmartCalc

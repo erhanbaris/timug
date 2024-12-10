@@ -45,7 +45,8 @@ impl Object for Reading {
         let ctx = get_context();
         if let Some(config) = ctx.get_config::<ReadingInfo>(Self::name()) {
             let env = state.env();
-            let content = render!(in env, HTML, image => config.image, name => config.name, series_name => config.series_name, author => config.author, link => config.link);
+            let html = &ctx.get_template_page("reading.html", HTML);
+            let content = render!(in env, html, image => config.image, name => config.name, series_name => config.series_name, author => config.author, link => config.link);
             return Ok(Value::from_safe_string(content));
         }
 

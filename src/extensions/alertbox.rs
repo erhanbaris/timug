@@ -6,11 +6,11 @@ use minijinja::{
     Error, ErrorKind, State, Value,
 };
 
-use crate::tools::parse_yaml;
+use crate::{context::get_context, tools::parse_yaml};
 
 use super::Extension;
 
-static ALERTBOX_HTML: &str = include_str!("alertbox.html");
+static HTML: &str = include_str!("alertbox.html");
 
 pub struct AlertBox;
 
@@ -33,6 +33,7 @@ impl Object for AlertBox {
 
     fn call(self: &Arc<Self>, state: &State<'_, '_>, args: &[Value]) -> Result<Value, Error> {
         let (style, title, kwargs): (&str, &str, Kwargs) = from_args(args)?;
+        let ctx = get_context();
 
         let caller: Value = kwargs.get("caller")?;
         let content = caller.call(state, args!())?;
@@ -46,9 +47,9 @@ impl Object for AlertBox {
 
         let mut compiled_content = String::new();
         pulldown_cmark::html::push_html(&mut compiled_content, parse_yaml(content));
+        let html = &ctx.get_template_page("alertbox.html", HTML);
 
-        let content =
-            render!(ALERTBOX_HTML, content => compiled_content, title => title, style => style);
+        let content = render!(html, content => compiled_content, title => title, style => style);
         Ok(Value::from_safe_string(content))
     }
 }
