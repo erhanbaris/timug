@@ -1,3 +1,4 @@
+use console::style;
 use parking_lot::{
     lock_api::{MappedRwLockReadGuard, RwLockReadGuard},
     RawRwLock, RwLock,
@@ -8,7 +9,6 @@ use std::{
 };
 
 use chrono::{DateTime, Datelike, Utc};
-use colored::Colorize;
 use minijinja::{context, value::Object, Value};
 use serde::{Deserialize, Serialize};
 
@@ -16,7 +16,7 @@ use crate::{
     engine::{RenderEngine, Renderable},
     error::TimugError,
     pages::POST_HTML,
-    tools::{get_file_content, parse_yaml, parse_yaml_front_matter},
+    tools::{get_file_content, get_file_name, parse_yaml, parse_yaml_front_matter},
 };
 const DATE_FORMAT: &str = "%Y-%m-%d %H:%M:%S";
 
@@ -167,7 +167,7 @@ impl Renderable for Post {
             .join(date.day().to_string());
         let file_name = file_path.join(format!("{}.html", self.slug()));
 
-        println!("{}: {}", "Compiling".yellow(), self.slug());
+        engine.update_status(style("Rendering post").bold().cyan().to_string(), get_file_name(&file_name)?.as_str());
 
         if self.content().contains("{%") {
             let content = engine.env.render_str(self.content().as_str(), &context)?;
@@ -191,8 +191,7 @@ impl Renderable for Post {
         let content: String = template.render(context)?;
         std::fs::create_dir_all(file_path)?;
         engine.compress_and_write(content, &file_name)?;
-
-        println!("{}: {}", "Generated".green(), file_name.display());
+        engine.update_status(style("Generated post").bold().green().to_string(), get_file_name(&file_name)?.as_str());
         Ok(())
     }
 }

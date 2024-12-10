@@ -1,6 +1,6 @@
 use std::{path::PathBuf, sync::Arc};
 
-use colored::Colorize;
+use console::style;
 use minijinja::{context, value::Object, Value};
 use serde::{Deserialize, Serialize};
 use unidecode::unidecode;
@@ -8,7 +8,7 @@ use unidecode::unidecode;
 use crate::{
     engine::{RenderEngine, Renderable},
     post::Post,
-    posts::Posts,
+    posts::Posts, tools::get_file_name,
 };
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -29,7 +29,7 @@ impl Renderable for Tag {
         let name = unidecode(&self.name).replace([' ', '\r', '\n', '\t'], "-");
         let context = engine.create_context();
         let file_name = ctx.folder.join(format!("{}.html", name.to_lowercase()));
-        println!("{}: {}", "Rendering".yellow(), file_name.display());
+        engine.update_status(style("Rendering tag").bold().cyan().to_string(), get_file_name(&file_name)?.as_str());
 
         let posts = Value::from_object(Posts {
             items: self.posts.clone().into(),
@@ -43,6 +43,7 @@ impl Renderable for Tag {
 
         let content = template.render(context)?;
         engine.compress_and_write(content, &file_name)?;
+        engine.update_status(style("Generated tag").bold().green().to_string(), get_file_name(&file_name)?.as_str());
         Ok(())
     }
 }

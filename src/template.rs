@@ -1,6 +1,7 @@
 use std::{fs::read_to_string, path::PathBuf};
 
 use anyhow::Result;
+use console::style;
 use serde::{Deserialize, Serialize};
 use serde_yaml::from_str;
 
@@ -24,6 +25,8 @@ pub struct Template {
 impl Template {
     pub fn new(path: PathBuf) -> Result<Self> {
         let config_path = path.join("template.yaml");
+        println!("{}: {}", style("Reading template file from").yellow().bold(), config_path.display());
+
         let content = read_to_string(&config_path)?;
         let config: TemplateConfig = from_str(&content)?;
 

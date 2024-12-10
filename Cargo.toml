@@ -16,7 +16,7 @@ license = "GNU General Public License, version 2"
 [dependencies]
 anyhow = "1.0.93"
 chrono = "0.4.38"
-colored = "2.1.0"
+console = "0.15.8"
 minijinja = { version = "2.5.0", features = ["loader"] }
 parking_lot = { version = "0.12.3", features = ["serde", "owning_ref", "arc_lock"] }
 pulldown-cmark = "0.12.2"

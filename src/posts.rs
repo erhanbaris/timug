@@ -1,6 +1,5 @@
 use std::sync::Arc;
 
-use colored::Colorize;
 use minijinja::{
     value::{Enumerator, Object},
     Value,
@@ -23,12 +22,16 @@ impl Posts {
         for file in files {
             let post = Post::load_from_path(&file)?;
 
+            if post.draft() {
+                continue;
+            }
+
             for tag in post.tags() {
                 ctx.tags.add(tag, post.clone());
             }
 
             items.push(post);
-            println!("{}: {}", "Parsed".green(), file.display());
+            // println!("{}: {}", "Parsed", file.display());
         }
 
         items.sort_by_key(|b| std::cmp::Reverse(b.date()));

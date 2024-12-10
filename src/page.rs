@@ -4,7 +4,7 @@ use std::{
     sync::Arc,
 };
 
-use colored::Colorize;
+use console::style;
 use minijinja::{value::Object, Value};
 use serde::{Deserialize, Serialize};
 
@@ -119,7 +119,7 @@ impl Renderable for Page {
         let ctx = get_context();
 
         let template = engine.env.get_template(&self.path)?;
-        println!("{}: {}", "Rendering".yellow(), self.path);
+        engine.update_status(style("Rendering page").bold().cyan().to_string(), self.file_name.as_str());
 
         let context = engine.create_context();
         let content = template.render(context)?;
@@ -130,8 +130,8 @@ impl Renderable for Page {
             .join(ctx.config.deployment_folder.clone());
         let file_path = file_path.join(&self.file_name);
 
-        println!("{}: {}", "Generating".yellow(), file_path.display());
         engine.compress_and_write(content, &file_path)?;
+        engine.update_status(style("Generated page").bold().green().to_string(), self.file_name.as_str());
         Ok(())
     }
 }

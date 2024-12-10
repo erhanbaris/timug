@@ -34,3 +34,7 @@ projects:
     link: https://erhanbaris.github.io/smartcalc-app/
   - name: Karamel Programming Language
     link: https://github.com/erhanbaris/karamel
+  - name: 6502 Assembler
+    link: https://github.com/erhanbaris/timu6502asm
+  - name: Yummy Game Server
+    link: https://erhanbaris.github.io/yummy/

@@ -5,7 +5,6 @@ use std::{
 };
 
 use anyhow::Context;
-use colored::Colorize;
 use minijinja::{context, path_loader, Environment, Value};
 use run_shell::cmd;
 
@@ -30,7 +29,10 @@ pub struct RenderEngine<'a> {
 impl<'a> RenderEngine<'a> {
     pub fn new() -> Self {
         let env = Environment::new();
-        Self { env }
+
+        Self {
+            env,
+        }
     }
 
     pub fn run(&mut self) -> anyhow::Result<()> {
@@ -55,6 +57,10 @@ impl<'a> RenderEngine<'a> {
         self.template_process();
 
         Ok(())
+    }
+
+    pub fn update_status(&self, status: String, message: &str) {
+        println!("{}: {}", status, message);
     }
 
     fn pre_template_process(&mut self) {
@@ -163,7 +169,6 @@ impl<'a> RenderEngine<'a> {
     }
 
     pub fn generate_tags(&mut self) -> anyhow::Result<()> {
-        println!("{}", "Generating tags".green());
         let ctx = get_context();
 
         let deployment_folder = ctx.config.blog_path.join(&ctx.config.deployment_folder);

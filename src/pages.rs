@@ -1,6 +1,5 @@
 use std::sync::Arc;
 
-use colored::Colorize;
 use minijinja::{
     value::{Enumerator, Object},
     Value,
@@ -24,7 +23,7 @@ impl Pages {
 
         for html_path in html_files.iter() {
             self.items.push(Page::load_from_path(html_path)?);
-            println!("{}: {}", "Parsed".green(), html_path.display());
+            // println!("{}: {}", "Parsed", html_path.display());
         }
 
         self.items
@@ -41,7 +40,7 @@ impl Pages {
             let mut page = Page::load_from_path(&file)?;
             page.render = true;
             self.items.push(page);
-            println!("{}: {}", "Parsed".green(), file.display());
+            // println!("{}: {}", "Parsed", file.display());
         }
 
         self.items

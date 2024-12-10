@@ -16,6 +16,10 @@ mod tools;
 
 use anyhow::Result;
 
+use std::time::Instant;
+
+use console::Emoji;
+
 use engine::RenderEngine;
 use extensions::{
     alertbox::AlertBox, codeblock::Codeblock, contacts::Contacts, fontawesome::FontAwesome,
@@ -23,7 +27,11 @@ use extensions::{
     social_media_share::SocialMediaShare,
 };
 
+static SPARKLE: Emoji<'_, '_> = Emoji("✨ ", ":-)");
+
 fn main() -> Result<()> {
+    let started = Instant::now();
+
     let mut engine = RenderEngine::new();
     engine.register_extension::<Codeblock>()?;
     engine.register_extension::<Quote>()?;
@@ -36,5 +44,6 @@ fn main() -> Result<()> {
     engine.register_extension::<Projects>()?;
     engine.register_extension::<Contacts>()?;
     engine.run()?;
+    println!("{} Done in {:?} seconds", SPARKLE, started.elapsed());
     Ok(())
 }
