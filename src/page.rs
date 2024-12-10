@@ -4,10 +4,15 @@ use std::{
     sync::Arc,
 };
 
+use colored::Colorize;
 use minijinja::{value::Object, Value};
 use serde::{Deserialize, Serialize};
 
-use crate::tools::{get_file_content, get_file_name, get_path, parse_yaml_front_matter};
+use crate::{
+    context::get_context,
+    engine::{RenderEngine, Renderable},
+    tools::{get_file_content, get_file_name, get_path, parse_yaml_front_matter},
+};
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 pub struct Page {
@@ -101,5 +106,32 @@ impl Object for Page {
             "no_listing" => Some(Value::from(self.no_listing)),
             _ => None,
         }
+    }
+}
+
+impl Renderable for Page {
+    type Context = ();
+    fn render(&self, engine: &RenderEngine<'_>, _: Self::Context) -> anyhow::Result<()> {
+        if !self.render {
+            return Ok(());
+        }
+
+        let ctx = get_context();
+
+        let template = engine.env.get_template(&self.path)?;
+        println!("{}: {}", "Rendering".yellow(), self.path);
+
+        let context = engine.create_context();
+        let content = template.render(context)?;
+
+        let file_path = ctx
+            .config
+            .blog_path
+            .join(ctx.config.deployment_folder.clone());
+        let file_path = file_path.join(&self.file_name);
+
+        println!("{}: {}", "Generating".yellow(), file_path.display());
+        engine.compress_and_write(content, &file_path)?;
+        Ok(())
     }
 }

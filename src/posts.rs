@@ -24,22 +24,13 @@ impl Posts {
             let post = Post::load_from_path(&file)?;
 
             for tag in post.tags() {
-                if let Some(tag_data) = ctx.tag_posts.get_mut(&tag) {
-                    tag_data.push(post.clone());
-                } else {
-                    ctx.tag_posts.insert(tag.clone(), vec![post.clone()]);
-                }
-
-                if !ctx.tags.iter().any(|item| item.eq(&tag)) {
-                    ctx.tags.push(tag);
-                }
+                ctx.tags.add(tag, post.clone());
             }
 
             items.push(post);
             println!("{}: {}", "Parsed".green(), file.display());
         }
 
-        ctx.tags.sort();
         items.sort_by_key(|b| std::cmp::Reverse(b.date()));
 
         Ok(Self {

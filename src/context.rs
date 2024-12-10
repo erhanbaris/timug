@@ -1,18 +1,18 @@
 use std::env::current_dir;
 use std::fs::read_to_string;
+use std::path::PathBuf;
 use std::sync::OnceLock;
-use std::{collections::HashMap, path::PathBuf};
 
 use colored::Colorize;
 use minijinja::Value;
+use parking_lot::{RwLock, RwLockReadGuard, RwLockWriteGuard};
 use serde::de::DeserializeOwned;
 use serde_yaml::from_str;
-use std::sync::{RwLock, RwLockReadGuard, RwLockWriteGuard};
 
 use crate::config::TimugConfig;
 use crate::pages::Pages;
-use crate::post::Post;
 use crate::posts::Posts;
+use crate::tags::Tags;
 use crate::template::Template;
 
 const TEMPLATES_PATH: &str = "templates";
@@ -35,8 +35,7 @@ pub struct TimugContext {
     pub pages_value: Value,
     pub pages: Pages,
     pub posts: Posts,
-    pub tags: Vec<String>,
-    pub tag_posts: HashMap<String, Vec<Post>>,
+    pub tags: Tags,
     pub template: Template,
 }
 
@@ -73,7 +72,6 @@ impl TimugContext {
             posts_value: Default::default(),
             pages_value: Default::default(),
             tags: Default::default(),
-            tag_posts: Default::default(),
             pages: Default::default(),
             posts: Default::default(),
         }
@@ -104,12 +102,10 @@ pub fn get_context() -> RwLockReadGuard<'static, TimugContext> {
     CONTEXT
         .get_or_init(|| TimugContext::build(None).into())
         .read()
-        .unwrap()
 }
 
 pub fn get_mut_context() -> RwLockWriteGuard<'static, TimugContext> {
     CONTEXT
         .get_or_init(|| TimugContext::build(None).into())
         .write()
-        .unwrap()
 }

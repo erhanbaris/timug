@@ -5,19 +5,23 @@ use std::{
 };
 
 use anyhow::Context;
-use chrono::Datelike;
 use colored::Colorize;
 use minijinja::{context, path_loader, Environment, Value};
 use run_shell::cmd;
-use unidecode::unidecode;
 
 use crate::{
     context::{get_context, get_mut_context},
     extensions::Extension,
-    pages::{Pages, POSTS_HTML, POST_HTML},
+    pages::{Pages, POSTS_HTML},
+    post::PostContext,
     posts::Posts,
-    tools::parse_yaml,
+    tag::TagContext,
 };
+
+pub trait Renderable {
+    type Context;
+    fn render(&self, engine: &RenderEngine<'_>, ctx: Self::Context) -> anyhow::Result<()>;
+}
 
 pub struct RenderEngine<'a> {
     pub env: Environment<'a>,
@@ -129,14 +133,13 @@ impl<'a> RenderEngine<'a> {
         Ok(())
     }
 
-    fn create_context(&self) -> Value {
+    pub fn create_context(&self) -> Value {
         let ctx = get_context();
         context! {
             config => ctx.config,
             headers => ctx.headers,
             after_bodies => ctx.after_bodies,
             tags => ctx.tags,
-            tag_posts => ctx.tag_posts,
             posts => ctx.posts_value,
             pages => ctx.pages_value
         }
@@ -144,58 +147,16 @@ impl<'a> RenderEngine<'a> {
 
     pub fn generate_posts(&mut self) -> anyhow::Result<()> {
         let ctx = get_context();
-        let context = self.create_context();
         let deployment_folder = ctx.config.blog_path.join(&ctx.config.deployment_folder);
 
-        let mut created_paths = Vec::new();
-        let mut generate_path = |path: &PathBuf| -> anyhow::Result<()> {
-            if !created_paths.contains(path) {
-                std::fs::create_dir_all(path)?;
-                created_paths.push(path.clone());
-            }
-
-            Ok(())
-        };
-
         for (index, post) in ctx.posts.items.iter().enumerate() {
-            if post.draft() {
-                continue;
-            }
-
-            let mut post = post.clone();
-            let date = post.date();
-            let file_path = deployment_folder
-                .join(date.year().to_string())
-                .join(date.month().to_string())
-                .join(date.day().to_string());
-            let file_name = file_path.join(format!("{}.html", post.slug()));
-
-            println!("{}: {}", "Compiling".yellow(), post.slug());
-
-            if post.content().contains("{%") {
-                let content = self.env.render_str(post.content(), &context)?;
-                post.set_content(content);
-            }
-
-            let mut content = String::new();
-            pulldown_cmark::html::push_html(&mut content, parse_yaml(post.content()));
-            post.set_content(content);
-
-            let template = self.env.get_template(POST_HTML)?;
-
-            let context = context! {
-                ..context! {
-                    post => Value::from_object(post.clone()),
-                    index => index,
+            post.render(
+                self,
+                PostContext {
+                    index,
+                    deployment_folder: deployment_folder.clone(),
                 },
-                ..context.clone()
-            };
-
-            let content = template.render(context)?;
-            generate_path(&file_path)?;
-            self.compress_and_write(content, &file_name)?;
-
-            println!("{}: {}", "Generated".green(), file_name.display());
+            )?;
         }
 
         Ok(())
@@ -204,7 +165,6 @@ impl<'a> RenderEngine<'a> {
     pub fn generate_tags(&mut self) -> anyhow::Result<()> {
         println!("{}", "Generating tags".green());
         let ctx = get_context();
-        let context = self.create_context();
 
         let deployment_folder = ctx.config.blog_path.join(&ctx.config.deployment_folder);
         let file_path = deployment_folder.join("tags");
@@ -214,23 +174,15 @@ impl<'a> RenderEngine<'a> {
             .context("posts.html could not found")?;
         std::fs::create_dir_all(&file_path)?;
 
-        for (index, (tag, posts)) in ctx.tag_posts.iter().enumerate() {
-            let tag = unidecode(tag).replace([' ', '\r', '\n', '\t'], "-");
-            let file_name = file_path.join(format!("{}.html", tag.to_lowercase()));
-            println!("{}: {}", "Rendering".yellow(), file_name.display());
-
-            let posts = Value::from_object(Posts {
-                items: posts.clone().into(),
-            });
-
-            let template = self.env.get_template(&posts_page.path)?;
-            let context = context! {
-                ..context! { index => index, posts => posts },
-                ..context.clone()
-            };
-
-            let content = template.render(context)?;
-            self.compress_and_write(content, &file_name)?;
+        for (index, tag) in ctx.tags.iter().enumerate() {
+            tag.render(
+                self,
+                TagContext {
+                    folder: deployment_folder.clone(),
+                    index,
+                    template_path: posts_page.path.clone(),
+                },
+            )?;
         }
 
         Ok(())
@@ -264,29 +216,13 @@ impl<'a> RenderEngine<'a> {
     pub fn generate_pages(&mut self) -> anyhow::Result<()> {
         let ctx = get_context();
         for page in ctx.pages.items.iter() {
-            if !page.render {
-                continue;
-            }
-
-            let template = self.env.get_template(&page.path)?;
-            println!("{}: {}", "Rendering".yellow(), page.path);
-            let context = self.create_context();
-            let content = template.render(context)?;
-
-            let file_path = ctx
-                .config
-                .blog_path
-                .join(ctx.config.deployment_folder.clone());
-            let file_path = file_path.join(&page.file_name);
-
-            println!("{}: {}", "Generating".yellow(), file_path.display());
-            self.compress_and_write(content, &file_path)?;
+            page.render(self, ())?;
         }
 
         Ok(())
     }
 
-    fn compress_and_write(&self, content: String, path: &PathBuf) -> anyhow::Result<()> {
+    pub fn compress_and_write(&self, content: String, path: &PathBuf) -> anyhow::Result<()> {
         let mut file = File::create(path)?;
         //let content = Self::compress_html(content);
         Ok(file.write_all(content.as_bytes())?)

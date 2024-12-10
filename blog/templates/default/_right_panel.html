@@ -5,11 +5,10 @@
             <div class="p-3 text-lg font-semibold text-gray-600 text-center mt-5"><i class="fas fa-tags fa-sm mr-1 text-gray-600/90"></i>Tags</div>
             <div class="mx-5">
                 <ul role="list" class="divide-y divide-gray-100">
-
-                    {%- for tag in tags %}
+                    {%- for tag in tags.tags %}
                     <li class="py-2 justify-between text-sm text-gray-400 text-center">
-                        <a class="hover:text-sky-700 hover:font-bold" href="/tags/{{ tag | url_encode }}.html">
-                            # {{ tag }}
+                        <a class="hover:text-sky-700 hover:font-bold" href="/tags/{{ tag.name | url_encode }}.html">
+                            # {{ tag.name }}
                         </a>
                     </li>
                     {% endfor %}

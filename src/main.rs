@@ -9,6 +9,8 @@ mod page;
 mod pages;
 mod post;
 mod posts;
+mod tag;
+mod tags;
 mod template;
 mod tools;
 

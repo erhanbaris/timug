@@ -1,21 +1,28 @@
+use parking_lot::{
+    lock_api::{MappedRwLockReadGuard, RwLockReadGuard},
+    RawRwLock, RwLock,
+};
 use std::{
     path::{Path, PathBuf},
     sync::Arc,
 };
 
-use chrono::{DateTime, Utc};
-use minijinja::{value::Object, Value};
+use chrono::{DateTime, Datelike, Utc};
+use colored::Colorize;
+use minijinja::{context, value::Object, Value};
 use serde::{Deserialize, Serialize};
 
 use crate::{
+    engine::{RenderEngine, Renderable},
     error::TimugError,
-    tools::{get_file_content, parse_yaml_front_matter},
+    pages::POST_HTML,
+    tools::{get_file_content, parse_yaml, parse_yaml_front_matter},
 };
 const DATE_FORMAT: &str = "%Y-%m-%d %H:%M:%S";
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Post {
-    inner: Arc<InnerPost>,
+    inner: Arc<RwLock<InnerPost>>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -91,36 +98,36 @@ impl Post {
 
         post.content = front_matter.content.to_string();
         Ok(Post {
-            inner: Arc::new(post),
+            inner: Arc::new(post.into()),
         })
     }
 
-    pub fn title(&self) -> &str {
-        &self.inner.title
+    pub fn title(&self) -> MappedRwLockReadGuard<'_, RawRwLock, String> {
+        RwLockReadGuard::map(self.inner.read(), |item| &item.title)
     }
 
-    pub fn content(&self) -> &str {
-        &self.inner.content
+    pub fn content(&self) -> MappedRwLockReadGuard<'_, RawRwLock, String> {
+        RwLockReadGuard::map(self.inner.read(), |item| &item.content)
     }
 
-    pub fn set_content(&mut self, content: String) {
-        Arc::make_mut(&mut self.inner).content = content;
+    pub fn set_content(&self, content: String) {
+        self.inner.write().content = content;
     }
 
-    pub fn slug(&self) -> &str {
-        &self.inner.slug
+    pub fn slug(&self) -> MappedRwLockReadGuard<'_, RawRwLock, String> {
+        RwLockReadGuard::map(self.inner.read(), |item| &item.slug)
     }
 
     pub fn draft(&self) -> bool {
-        self.inner.draft
+        self.inner.read().draft
     }
 
     pub fn date(&self) -> DateTime<Utc> {
-        self.inner.date
+        self.inner.read().date
     }
 
     pub fn tags(&self) -> Vec<String> {
-        self.inner.tags.clone()
+        self.inner.read().tags.clone()
     }
 }
 
@@ -128,16 +135,68 @@ impl Object for Post {
     fn get_value(self: &Arc<Self>, key: &Value) -> Option<Value> {
         let key = key.as_str()?;
         match key {
-            "title" => Some(Value::from(self.title())),
-            "content" => Some(Value::from(self.content())),
+            "title" => Some(Value::from(self.title().as_str())),
+            "content" => Some(Value::from(self.content().as_str())),
             "date" => Some(Value::from(self.date().format(DATE_FORMAT).to_string())),
-            "slug" => Some(Value::from(self.slug())),
+            "slug" => Some(Value::from(self.slug().as_str())),
             "tags" => Some(Value::from(self.tags())),
             "draft" => Some(Value::from(self.draft())),
             _ => None,
         }
     }
 }
+
+pub struct PostContext {
+    pub deployment_folder: PathBuf,
+    pub index: usize,
+}
+
+impl Renderable for Post {
+    type Context = PostContext;
+    fn render(&self, engine: &RenderEngine<'_>, ctx: PostContext) -> anyhow::Result<()> {
+        if self.draft() {
+            return Ok(());
+        }
+
+        let context = engine.create_context();
+        let date = self.date();
+        let file_path = ctx
+            .deployment_folder
+            .join(date.year().to_string())
+            .join(date.month().to_string())
+            .join(date.day().to_string());
+        let file_name = file_path.join(format!("{}.html", self.slug()));
+
+        println!("{}: {}", "Compiling".yellow(), self.slug());
+
+        if self.content().contains("{%") {
+            let content = engine.env.render_str(self.content().as_str(), &context)?;
+            self.set_content(content);
+        }
+
+        let mut content = String::new();
+        pulldown_cmark::html::push_html(&mut content, parse_yaml(self.content().as_str()));
+        self.set_content(content);
+
+        let template = engine.env.get_template(POST_HTML)?;
+
+        let context = context! {
+            ..context! {
+                post => Value::from_object(self.clone()),
+                index => ctx.index,
+            },
+            ..context.clone()
+        };
+
+        let content: String = template.render(context)?;
+        std::fs::create_dir_all(file_path)?;
+        engine.compress_and_write(content, &file_name)?;
+
+        println!("{}: {}", "Generated".green(), file_name.display());
+        Ok(())
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -157,15 +216,15 @@ mod tests {
         .unwrap();
 
         let post = Post::load_from_path(&file_path).unwrap();
-        assert_eq!(post.title(), "Test Post");
+        assert_eq!(post.title().as_str(), "Test Post");
         assert_eq!(
             post.date().format(DATE_FORMAT).to_string(),
             "2023-10-01 12:00:00"
         );
-        assert_eq!(post.slug(), "test-post");
+        assert_eq!(post.slug().as_str(), "test-post");
         assert_eq!(post.tags(), vec!["rust", "test"]);
         assert_eq!(post.draft(), false);
-        assert_eq!(post.content(), "This is a test post.\n");
+        assert_eq!(post.content().as_str(), "This is a test post.\n");
     }
 
     #[test]
@@ -173,24 +232,24 @@ mod tests {
         let content = "---\ntitle: Test Post\ndate: 2023-10-01 12:00:00\nslug: test-post\ntags: [\"rust\", \"test\"]\ndraft: false\n---\nThis is a test post.";
         let path = Path::new("test_post.md");
         let post = Post::load_from_str(content, path).unwrap();
-        assert_eq!(post.title(), "Test Post");
+        assert_eq!(post.title().as_str(), "Test Post");
         assert_eq!(
             post.date().format(DATE_FORMAT).to_string(),
             "2023-10-01 12:00:00"
         );
-        assert_eq!(post.slug(), "test-post");
+        assert_eq!(post.slug().as_str(), "test-post");
         assert_eq!(post.tags(), vec!["rust", "test"]);
         assert_eq!(post.draft(), false);
-        assert_eq!(post.content(), "This is a test post.");
+        assert_eq!(post.content().as_str(), "This is a test post.");
     }
 
     #[test]
     fn test_set_content() {
         let content = "---\ntitle: Test Post\ndate: 2023-10-01 12:00:00\nslug: test-post\ntags: [\"rust\", \"test\"]\ndraft: false\n---\nThis is a test post.";
         let path = Path::new("test_post.md");
-        let mut post = Post::load_from_str(content, path).unwrap();
+        let post = Post::load_from_str(content, path).unwrap();
         post.set_content("Updated content.".to_string());
-        assert_eq!(post.content(), "Updated content.");
+        assert_eq!(post.content().as_str(), "Updated content.");
     }
 
     #[test]
