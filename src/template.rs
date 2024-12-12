@@ -25,7 +25,11 @@ pub struct Template {
 impl Template {
     pub fn new(path: PathBuf) -> Result<Self> {
         let config_path = path.join("template.yaml");
-        println!("{}: {}", style("Reading template file from").yellow().bold(), config_path.display());
+        println!(
+            "{}: {}",
+            style("Reading template file from").yellow().bold(),
+            config_path.display()
+        );
 
         let content = read_to_string(&config_path)?;
         let config: TemplateConfig = from_str(&content)?;

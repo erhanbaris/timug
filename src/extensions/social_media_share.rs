@@ -36,8 +36,9 @@ impl Object for SocialMediaShare {
 
         let env = state.env();
         let ctx = get_context();
+        let html = &ctx.get_template_page("social_media_share.html", HTML);
         let content =
-            render!(in env, HTML, post => post, posts => ctx.posts_value, pages => ctx.pages_value);
+            render!(in env, html, post => post, posts => ctx.posts_value, pages => ctx.pages_value);
         Ok(Value::from_safe_string(content))
     }
 }

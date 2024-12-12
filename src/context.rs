@@ -47,7 +47,11 @@ impl TimugContext {
             None => current_path.join(CONFIG_FILE_NAME),
         };
 
-        println!("{}: {}", style("Reading config file from").yellow().bold(), config_path.display());
+        println!(
+            "{}: {}",
+            style("Reading config file from").yellow().bold(),
+            config_path.display()
+        );
         let config_content = read_to_string(&config_path).expect("Failed to read config file");
         let config = from_str(&config_content).expect("Failed to parse config file");
         let templates_path = Self::get_path(&config, TEMPLATES_PATH).join(config.theme.clone());

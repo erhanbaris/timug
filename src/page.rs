@@ -119,7 +119,10 @@ impl Renderable for Page {
         let ctx = get_context();
 
         let template = engine.env.get_template(&self.path)?;
-        engine.update_status(style("Rendering page").bold().cyan().to_string(), self.file_name.as_str());
+        engine.update_status(
+            style("Rendering page").bold().cyan().to_string(),
+            self.file_name.as_str(),
+        );
 
         let context = engine.create_context();
         let content = template.render(context)?;
@@ -131,7 +134,10 @@ impl Renderable for Page {
         let file_path = file_path.join(&self.file_name);
 
         engine.compress_and_write(content, &file_path)?;
-        engine.update_status(style("Generated page").bold().green().to_string(), self.file_name.as_str());
+        engine.update_status(
+            style("Generated page").bold().green().to_string(),
+            self.file_name.as_str(),
+        );
         Ok(())
     }
 }

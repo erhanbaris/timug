@@ -10,6 +10,7 @@ pub mod projects;
 pub mod quote;
 pub mod reading;
 pub mod social_media_share;
+pub mod stats;
 
 pub trait Extension<'a> {
     fn name() -> &'static str;

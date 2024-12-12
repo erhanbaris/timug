@@ -24,7 +24,7 @@ use engine::RenderEngine;
 use extensions::{
     alertbox::AlertBox, codeblock::Codeblock, contacts::Contacts, fontawesome::FontAwesome,
     gist::Gist, info::Info, projects::Projects, quote::Quote, reading::Reading,
-    social_media_share::SocialMediaShare,
+    social_media_share::SocialMediaShare, stats::Stats,
 };
 
 static SPARKLE: Emoji<'_, '_> = Emoji("✨ ", ":-)");
@@ -43,6 +43,7 @@ fn main() -> Result<()> {
     engine.register_extension::<Reading>()?;
     engine.register_extension::<Projects>()?;
     engine.register_extension::<Contacts>()?;
+    engine.register_extension::<Stats>()?;
     engine.run()?;
     println!("{} Done in {:?} seconds", SPARKLE, started.elapsed());
     Ok(())

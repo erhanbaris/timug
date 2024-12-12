@@ -167,7 +167,10 @@ impl Renderable for Post {
             .join(date.day().to_string());
         let file_name = file_path.join(format!("{}.html", self.slug()));
 
-        engine.update_status(style("Rendering post").bold().cyan().to_string(), get_file_name(&file_name)?.as_str());
+        engine.update_status(
+            style("Rendering post").bold().cyan().to_string(),
+            get_file_name(&file_name)?.as_str(),
+        );
 
         if self.content().contains("{%") {
             let content = engine.env.render_str(self.content().as_str(), &context)?;
@@ -191,7 +194,10 @@ impl Renderable for Post {
         let content: String = template.render(context)?;
         std::fs::create_dir_all(file_path)?;
         engine.compress_and_write(content, &file_name)?;
-        engine.update_status(style("Generated post").bold().green().to_string(), get_file_name(&file_name)?.as_str());
+        engine.update_status(
+            style("Generated post").bold().green().to_string(),
+            get_file_name(&file_name)?.as_str(),
+        );
         Ok(())
     }
 }

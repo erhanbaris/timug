@@ -6,7 +6,7 @@
         </span>
         <ul class="flex flex-wrap items-center mt-3 text-sm font-medium text-gray-500 dark:text-gray-400 sm:mt-0">
             {%- for page in pages %}
-            {% if page.render %}
+            {% if page.render and page.no_listing == false %}
             <li><a class="hover:underline me-4 md:me-6" href="{{ page_url(page.slug) }}">{{ page.title }}</a></li>
             {% endif %}
             {% endfor %}

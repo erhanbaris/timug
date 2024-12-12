@@ -30,9 +30,7 @@ impl<'a> RenderEngine<'a> {
     pub fn new() -> Self {
         let env = Environment::new();
 
-        Self {
-            env,
-        }
+        Self { env }
     }
 
     pub fn run(&mut self) -> anyhow::Result<()> {

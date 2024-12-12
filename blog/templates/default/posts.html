@@ -4,6 +4,7 @@ order: 1
 render: true
 ---
 {% extends "base.html" %}
+{% block title %}{{ config.title }} - Posts {% endblock %}
 {% block body %}
 {%- include "_partial_posts.html" %}
 {% endblock %}

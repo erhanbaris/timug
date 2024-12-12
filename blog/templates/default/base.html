@@ -4,9 +4,9 @@
 <head>
     <meta name="description" content="{{ config.description }}" />
     <meta charset="utf-8">
-    <title>{{ config.name }}</title>
+    <title>{% block title %}{{ config.title }}{% endblock %}</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <meta name="author" content="">
+    <meta name="author" content="{{ config.author }}">
     {% block metas %}{% endblock %}
     {% block links %}{% endblock %}
     {% block scripts %}{% endblock %}

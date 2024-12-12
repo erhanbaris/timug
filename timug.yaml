@@ -38,3 +38,6 @@ projects:
     link: https://github.com/erhanbaris/timu6502asm
   - name: Yummy Game Server
     link: https://erhanbaris.github.io/yummy/
+
+stats:
+    link: https://timug-page-infos.erhanbaris.workers.dev/
