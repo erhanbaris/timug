@@ -76,7 +76,7 @@ static SCRIPTS: &str = r#"
 </script>
 "#;
 
-#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+#[derive(Debug, Default, Serialize, Deserialize)]
 struct StatsInfo {
     link: String,
 }
@@ -105,7 +105,6 @@ impl Object for Stats {
         if let Some(config) = ctx.get_config::<StatsInfo>(Self::name()) {
             let (slug, _): (&str, Kwargs) = from_args(args)?;
             let env = state.env();
-            let html = &ctx.get_template_page("stats.html", HTML);
             let path = encode(slug);
 
             let url = if config.link.ends_with("/") {
@@ -114,7 +113,15 @@ impl Object for Stats {
                 format!("{}/{}.html", config.link, path)
             };
 
-            let content = render!(in env, html, scripts => SCRIPTS.replace("[url]", &url).replace("[slug]", slug));
+            let content = match ctx.get_template_page("stats.html") {
+                Some(page) => {
+                    render!(in env, page.content.as_str(), scripts => SCRIPTS.replace("[url]", &url).replace("[slug]", slug))
+                }
+                None => {
+                    render!(in env, HTML, scripts => SCRIPTS.replace("[url]", &url).replace("[slug]", slug))
+                }
+            };
+
             return Ok(Value::from_safe_string(content));
         } else {
             println!(

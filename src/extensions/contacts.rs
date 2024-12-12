@@ -13,7 +13,7 @@ use super::Extension;
 
 static HTML: &str = include_str!("contacts.html");
 
-#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+#[derive(Debug, Default, Serialize, Deserialize)]
 struct ContactInfo {
     icon: String,
     link: String,
@@ -41,9 +41,13 @@ impl Object for Contacts {
 
     fn call(self: &Arc<Self>, state: &State<'_, '_>, _: &[Value]) -> Result<Value, Error> {
         let ctx = get_context();
-        let html = &ctx.get_template_page("contacts.html", HTML);
         let env = state.env();
-        let content = render!(in env, html, contacts => ctx.config.contacts);
+
+        let content = match ctx.get_template_page("contacts.html") {
+            Some(page) => render!(in env, page.content.as_str(), contacts => ctx.config.contacts),
+            None => render!(in env, HTML, contacts => ctx.config.contacts),
+        };
+
         Ok(Value::from_safe_string(content))
     }
 }

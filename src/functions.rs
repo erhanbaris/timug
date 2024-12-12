@@ -39,7 +39,7 @@ impl<'a> RenderEngine<'a> {
             }
         };
 
-        let post = match posts.items.iter().find(|post| post.slug().as_str() == slug) {
+        let post = match posts.posts.iter().find(|post| post.slug().as_str() == slug) {
             Some(post) => post,
             None => {
                 return Err(Error::new(

@@ -13,7 +13,7 @@ use super::Extension;
 
 static HTML: &str = include_str!("projects.html");
 
-#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+#[derive(Debug, Default, Serialize, Deserialize)]
 struct ProjectsInfo {
     name: String,
     link: String,
@@ -43,8 +43,12 @@ impl Object for Projects {
         let ctx = get_context();
         if let Some(projects) = ctx.get_config::<Vec<ProjectsInfo>>(Self::name()) {
             let env = state.env();
-            let html = &ctx.get_template_page("projects.html", HTML);
-            let content = render!(in env, html, projects => projects);
+
+            let content = match ctx.get_template_page("projects.html") {
+                Some(page) => render!(in env, page.content.as_str(), projects => projects),
+                None => render!(in env, HTML, projects => projects),
+            };
+
             return Ok(Value::from_safe_string(content));
         }
 

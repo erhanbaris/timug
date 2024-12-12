@@ -26,13 +26,13 @@ impl<'a> Iterator for TagsIterator<'a> {
     }
 }
 
-#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+#[derive(Debug, Default, Serialize, Deserialize)]
 pub struct Tags {
     pub tags: Vec<Tag>,
 }
 
 impl Tags {
-    pub fn add(&mut self, name: String, post: Post) {
+    pub fn add(&mut self, name: String, post: Arc<Post>) {
         let (tag, sort) = match self.tags.iter_mut().find(|item| item.name == name) {
             Some(tag) => (tag, false),
             None => {

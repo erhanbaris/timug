@@ -50,8 +50,11 @@ impl Object for Codeblock {
             })?
             .trim();
 
-        let html = &ctx.get_template_page("codeblock.html", HTML);
-        let content = render!(html, content => content, lang => lang);
+        let content = match ctx.get_template_page("codeblock.html") {
+            Some(page) => render!(page.content.as_str(), content => content, lang => lang),
+            None => render!(HTML, content => content, lang => lang),
+        };
+
         Ok(Value::from_safe_string(content))
     }
 }

@@ -15,7 +15,7 @@ use crate::{
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Tag {
     pub name: String,
-    pub posts: Vec<Post>,
+    pub posts: Vec<Arc<Post>>,
 }
 
 pub struct TagContext {
@@ -36,7 +36,7 @@ impl Renderable for Tag {
         );
 
         let posts = Value::from_object(Posts {
-            items: self.posts.clone().into(),
+            posts: self.posts.clone(),
         });
 
         let template = engine.env.get_template(&ctx.template_path)?;
@@ -61,7 +61,7 @@ impl Object for Tag {
         match key {
             "name" => Some(Value::from(self.name.as_str())),
             "items" => Some(Value::from_iter(
-                self.posts.iter().cloned().map(Value::from_object),
+                self.posts.iter().cloned().map(Value::from_dyn_object),
             )),
             _ => None,
         }

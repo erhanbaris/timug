@@ -13,7 +13,7 @@ pub const POSTS_HTML: &str = "posts.html";
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 pub struct Pages {
-    pub items: Vec<Page>,
+    pub items: Vec<Arc<Page>>,
 }
 
 impl Pages {
@@ -22,7 +22,7 @@ impl Pages {
         let html_files = get_files(&ctx.template.path, "html")?;
 
         for html_path in html_files.iter() {
-            self.items.push(Page::load_from_path(html_path)?);
+            self.items.push(Page::load_from_path(html_path)?.into());
             // println!("{}: {}", "Parsed", html_path.display());
         }
 
@@ -39,7 +39,7 @@ impl Pages {
         for file in files {
             let mut page = Page::load_from_path(&file)?;
             page.render = true;
-            self.items.push(page);
+            self.items.push(page.into());
             // println!("{}: {}", "Parsed", file.display());
         }
 
@@ -49,8 +49,11 @@ impl Pages {
         Ok(())
     }
 
-    pub fn get(&self, name: &str) -> Option<&Page> {
-        self.items.iter().find(|page| page.file_name == name)
+    pub fn get(&self, name: &str) -> Option<Arc<Page>> {
+        self.items
+            .iter()
+            .find(|page| page.file_name == name)
+            .cloned()
     }
 }
 
@@ -60,7 +63,7 @@ impl Object for Pages {
     }
     fn get_value(self: &Arc<Self>, index: &Value) -> Option<Value> {
         let item = self.items.get(index.as_usize()?)?;
-        Some(Value::from_object(item.clone()))
+        Some(Value::from_dyn_object(item.clone()))
     }
 
     fn enumerate(self: &Arc<Self>) -> Enumerator {

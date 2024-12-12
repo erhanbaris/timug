@@ -51,8 +51,11 @@ impl Object for Quote {
             )
         })?;
 
-        let html = &ctx.get_template_page("quote.html", HTML);
-        let content = render!(html, content => content, position => position);
+        let content = match ctx.get_template_page("quote.html") {
+            Some(page) => render!(page.content.as_str(), content => content, position => position),
+            None => render!(HTML, content => content, position => position),
+        };
+
         Ok(Value::from_safe_string(content))
     }
 }

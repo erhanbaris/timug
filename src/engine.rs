@@ -1,7 +1,7 @@
 use std::{
     fs::File,
     io::Write,
-    path::{Path, PathBuf},
+    path::{Path, PathBuf}, sync::Arc,
 };
 
 use anyhow::Context;
@@ -12,8 +12,7 @@ use crate::{
     context::{get_context, get_mut_context},
     extensions::Extension,
     pages::{Pages, POSTS_HTML},
-    post::PostContext,
-    posts::Posts,
+    posts::{Posts, PostsContext},
     tag::TagContext,
 };
 
@@ -113,10 +112,10 @@ impl<'a> RenderEngine<'a> {
     }
 
     pub fn parse_posts(&mut self) -> anyhow::Result<()> {
-        let posts = Posts::load()?;
+        let posts = Arc::new(Posts::load()?);
 
         let mut ctx = get_mut_context();
-        ctx.posts_value = Value::from_object(posts.clone());
+        ctx.posts_value = Value::from_dyn_object(posts.clone());
         ctx.posts = posts;
         Ok(())
     }
@@ -132,7 +131,9 @@ impl<'a> RenderEngine<'a> {
             self.env
                 .add_template_owned(page.path.clone(), page.content.clone())?;
         }
-        ctx.pages_value = Value::from_object(pages.clone());
+
+        let pages = Arc::new(pages);
+        ctx.pages_value = Value::from_dyn_object(pages.clone());
         ctx.pages = pages;
         Ok(())
     }
@@ -153,15 +154,8 @@ impl<'a> RenderEngine<'a> {
         let ctx = get_context();
         let deployment_folder = ctx.config.blog_path.join(&ctx.config.deployment_folder);
 
-        for (index, post) in ctx.posts.items.iter().enumerate() {
-            post.render(
-                self,
-                PostContext {
-                    index,
-                    deployment_folder: deployment_folder.clone(),
-                },
-            )?;
-        }
+        let posts_ctx = PostsContext { deployment_folder };
+        ctx.posts.render(self, posts_ctx)?;
 
         Ok(())
     }
@@ -181,7 +175,7 @@ impl<'a> RenderEngine<'a> {
             tag.render(
                 self,
                 TagContext {
-                    folder: deployment_folder.clone(),
+                    folder: file_path.clone(),
                     index,
                     template_path: posts_page.path.clone(),
                 },

@@ -1,7 +1,7 @@
 use std::env::current_dir;
 use std::fs::read_to_string;
 use std::path::PathBuf;
-use std::sync::OnceLock;
+use std::sync::{Arc, OnceLock};
 
 use console::style;
 use minijinja::Value;
@@ -10,6 +10,7 @@ use serde::de::DeserializeOwned;
 use serde_yaml::from_str;
 
 use crate::config::TimugConfig;
+use crate::page::Page;
 use crate::pages::Pages;
 use crate::posts::Posts;
 use crate::tags::Tags;
@@ -33,8 +34,8 @@ pub struct TimugContext {
     pub after_bodies: Vec<&'static str>,
     pub posts_value: Value,
     pub pages_value: Value,
-    pub pages: Pages,
-    pub posts: Posts,
+    pub pages: Arc<Pages>,
+    pub posts: Arc<Posts>,
     pub tags: Tags,
     pub template: Template,
 }
@@ -89,12 +90,8 @@ impl TimugContext {
         None
     }
 
-    pub fn get_template_page<'a>(&'a self, name: &str, default_html: &'a str) -> &'a str {
-        if let Some(page) = self.pages.get(name) {
-            &page.content
-        } else {
-            default_html
-        }
+    pub fn get_template_page(&self, name: &str) -> Option<Arc<Page>> {
+        self.pages.get(name)
     }
 }
 

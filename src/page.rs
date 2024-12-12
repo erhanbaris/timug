@@ -14,7 +14,7 @@ use crate::{
     tools::{get_file_content, get_file_name, get_path, parse_yaml_front_matter},
 };
 
-#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+#[derive(Debug, Default, Serialize, Deserialize)]
 pub struct Page {
     #[serde(default)]
     pub title: String,

@@ -1,4 +1,3 @@
-use console::style;
 use parking_lot::{
     lock_api::{MappedRwLockReadGuard, RwLockReadGuard},
     RawRwLock, RwLock,
@@ -8,24 +7,22 @@ use std::{
     sync::Arc,
 };
 
-use chrono::{DateTime, Datelike, Utc};
-use minijinja::{context, value::Object, Value};
+use chrono::{DateTime, Utc};
+use minijinja::{value::Object, Value};
 use serde::{Deserialize, Serialize};
 
 use crate::{
-    engine::{RenderEngine, Renderable},
     error::TimugError,
-    pages::POST_HTML,
-    tools::{get_file_content, get_file_name, parse_yaml, parse_yaml_front_matter},
+    tools::{get_file_content, parse_yaml_front_matter},
 };
 const DATE_FORMAT: &str = "%Y-%m-%d %H:%M:%S";
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize)]
 pub struct Post {
     inner: Arc<RwLock<InnerPost>>,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize)]
 struct InnerPost {
     #[serde(default)]
     pub title: String,
@@ -143,62 +140,6 @@ impl Object for Post {
             "draft" => Some(Value::from(self.draft())),
             _ => None,
         }
-    }
-}
-
-pub struct PostContext {
-    pub deployment_folder: PathBuf,
-    pub index: usize,
-}
-
-impl Renderable for Post {
-    type Context = PostContext;
-    fn render(&self, engine: &RenderEngine<'_>, ctx: PostContext) -> anyhow::Result<()> {
-        if self.draft() {
-            return Ok(());
-        }
-
-        let context = engine.create_context();
-        let date = self.date();
-        let file_path = ctx
-            .deployment_folder
-            .join(date.year().to_string())
-            .join(date.month().to_string())
-            .join(date.day().to_string());
-        let file_name = file_path.join(format!("{}.html", self.slug()));
-
-        engine.update_status(
-            style("Rendering post").bold().cyan().to_string(),
-            get_file_name(&file_name)?.as_str(),
-        );
-
-        if self.content().contains("{%") {
-            let content = engine.env.render_str(self.content().as_str(), &context)?;
-            self.set_content(content);
-        }
-
-        let mut content = String::new();
-        pulldown_cmark::html::push_html(&mut content, parse_yaml(self.content().as_str()));
-        self.set_content(content);
-
-        let template = engine.env.get_template(POST_HTML)?;
-
-        let context = context! {
-            ..context! {
-                post => Value::from_object(self.clone()),
-                index => ctx.index,
-            },
-            ..context.clone()
-        };
-
-        let content: String = template.render(context)?;
-        std::fs::create_dir_all(file_path)?;
-        engine.compress_and_write(content, &file_name)?;
-        engine.update_status(
-            style("Generated post").bold().green().to_string(),
-            get_file_name(&file_name)?.as_str(),
-        );
-        Ok(())
     }
 }
 

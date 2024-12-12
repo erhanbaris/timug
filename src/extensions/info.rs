@@ -48,8 +48,11 @@ impl Object for Info {
         let mut compiled_content = String::new();
         pulldown_cmark::html::push_html(&mut compiled_content, parse_yaml(content));
 
-        let html = &ctx.get_template_page("info.html", HTML);
-        let content = render!(html, content => compiled_content);
+        let content = match ctx.get_template_page("info.html") {
+            Some(page) => render!(page.content.as_str(), content => compiled_content),
+            None => render!(HTML, content => compiled_content),
+        };
+
         Ok(Value::from_safe_string(content))
     }
 }

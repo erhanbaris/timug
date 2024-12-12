@@ -47,9 +47,14 @@ impl Object for AlertBox {
 
         let mut compiled_content = String::new();
         pulldown_cmark::html::push_html(&mut compiled_content, parse_yaml(content));
-        let html = &ctx.get_template_page("alertbox.html", HTML);
 
-        let content = render!(html, content => compiled_content, title => title, style => style);
+        let content = match ctx.get_template_page("alertbox.html") {
+            Some(page) => {
+                render!(page.content.as_str(), content => compiled_content, title => title, style => style)
+            }
+            None => render!(HTML, content => compiled_content, title => title, style => style),
+        };
+
         Ok(Value::from_safe_string(content))
     }
 }
