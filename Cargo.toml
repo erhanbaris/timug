@@ -11,7 +11,7 @@ homepage = "https://github.com/erhanbaris/timug"
 repository = "https://github.com/erhanbaris/timug"
 keywords = ["blog", "static-page", "static-page-generator"]
 categories = ["command-line-utilities", "text-processing"]
-license = "GNU General Public License, version 2"
+license = "GPL-2.0"
 readme = "readme.md"
 exclude = [".github/", "blog/", ".cargo", ".vscode", "timug.yaml", "renovate.json"]
 
