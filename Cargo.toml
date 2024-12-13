@@ -13,6 +13,10 @@ keywords = ["blog", "static-page", "static-page-generator"]
 categories = ["command-line-utilities", "text-processing"]
 license = "GNU General Public License, version 2"
 
+[[bin]]
+name = "timug"
+path = "src/main.rs"
+
 [dependencies]
 anyhow = "1.0.93"
 chrono = "0.4.38"
