@@ -9,7 +9,7 @@ It has been created for personal blog creation purpose. Timus has its limits, bu
 documentation = "https://github.com/erhanbaris/timug"
 homepage = "https://github.com/erhanbaris/timug"
 repository = "https://github.com/erhanbaris/timug"
-keywords = ["blog", "static-page", "static-page-generator"]
+keywords = ["blog", "static-page", "page-generator", "generator", "markdown"]
 categories = ["command-line-utilities", "text-processing"]
 license = "GPL-2.0"
 readme = "readme.md"
