@@ -2,5 +2,5 @@ name: Default template
 pre-process:
 process:
   - npx tailwindcss -i style.css -o tailwindcss.css
-  - mv tailwindcss.css ../../public/assets/tailwindcss.css
+  - mv tailwindcss.css ../../public/assets/style.css
 post-process: 

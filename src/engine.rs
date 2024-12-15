@@ -1,19 +1,20 @@
 use std::{
     fs::File,
     io::Write,
-    path::{Path, PathBuf}, sync::Arc,
+    path::{Path, PathBuf},
+    sync::Arc,
 };
 
 use anyhow::Context;
 use minijinja::{context, path_loader, Environment, Value};
-use run_shell::cmd;
+use subprocess::{Exec, Redirection};
 
 use crate::{
     context::{get_context, get_mut_context},
     extensions::Extension,
     pages::{Pages, POSTS_HTML},
     posts::{Posts, PostsContext},
-    tag::TagContext,
+    tag::TagContext, tools::get_path,
 };
 
 pub trait Renderable {
@@ -23,13 +24,14 @@ pub trait Renderable {
 
 pub struct RenderEngine<'a> {
     pub env: Environment<'a>,
+    pub silent: bool,
 }
 
 impl<'a> RenderEngine<'a> {
-    pub fn new() -> Self {
+    pub fn new(silent: bool) -> Self {
         let env = Environment::new();
 
-        Self { env }
+        Self { env, silent }
     }
 
     pub fn run(&mut self) -> anyhow::Result<()> {
@@ -51,13 +53,15 @@ impl<'a> RenderEngine<'a> {
         self.generate_tags()?;
 
         self.move_statics()?;
-        self.template_process();
+        self.template_process()?;
 
         Ok(())
     }
 
     pub fn update_status(&self, status: String, message: &str) {
-        println!("{}: {}", status, message);
+        if !self.silent {
+            println!("{}: {}", status, message);
+        }
     }
 
     fn pre_template_process(&mut self) {
@@ -66,22 +70,49 @@ impl<'a> RenderEngine<'a> {
         let current_dir = std::env::current_dir().unwrap();
         std::env::set_current_dir(&ctx.template.path).unwrap();
         for process in pre_processes.iter() {
-            cmd!(process).run().unwrap();
+            let command = Exec::shell(process);
+            match self.silent {
+                true => {
+                    command
+                        .stdout(Redirection::Pipe)
+                        .stderr(Redirection::Merge)
+                        .capture()
+                        .unwrap()
+                        .stdout_str();
+                }
+                false => {
+                    command.join().unwrap();
+                }
+            };
         }
         std::env::set_current_dir(&current_dir).unwrap();
         drop(ctx);
     }
 
-    fn template_process(&mut self) {
+    fn template_process(&mut self) -> anyhow::Result<()>  {
         let ctx = get_context();
         let processes = &ctx.template.config.process;
         let current_dir = std::env::current_dir().unwrap();
         std::env::set_current_dir(&ctx.template.path).unwrap();
         for process in processes.iter() {
-            cmd!(process).run().unwrap();
+            let command = Exec::shell(process.replace("{publish-folder}", &get_path(&ctx.config.deployment_folder)?));
+            match self.silent {
+                true => {
+                    command
+                        .stdout(Redirection::Pipe)
+                        .stderr(Redirection::Merge)
+                        .capture()
+                        .unwrap()
+                        .stdout_str();
+                }
+                false => {
+                    command.join().unwrap();
+                }
+            };
         }
         std::env::set_current_dir(&current_dir).unwrap();
         drop(ctx);
+        Ok(())
     }
 
     pub fn register_extension<T: Extension<'a>>(&mut self) -> anyhow::Result<()> {

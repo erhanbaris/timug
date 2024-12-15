@@ -9,7 +9,7 @@ use crate::error::TimugError;
 pub fn get_file_name(path: &Path) -> anyhow::Result<String> {
     Ok(path
         .file_name()
-        .context("Could not convert to string")?
+        .context("Could not get filename")?
         .to_str()
         .context("Could not convert to string")?
         .to_lowercase())

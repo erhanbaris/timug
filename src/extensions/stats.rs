@@ -1,6 +1,5 @@
 use std::sync::Arc;
 
-use console::style;
 use minijinja::{
     render,
     value::{from_args, Kwargs, Object, ObjectRepr},
@@ -123,11 +122,6 @@ impl Object for Stats {
             };
 
             return Ok(Value::from_safe_string(content));
-        } else {
-            println!(
-                "{} stats configuration missing",
-                style("ERROR:").red().bold()
-            );
         }
 
         Ok(Value::UNDEFINED)

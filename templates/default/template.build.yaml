@@ -1,0 +1,6 @@
+name: Default template
+pre-process:
+process:
+  - npx tailwindcss -i custom_style.css -o style.css
+  - mv style.css ../../public/assets/style.css
+post-process: 

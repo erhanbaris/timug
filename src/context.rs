@@ -3,6 +3,7 @@ use std::fs::read_to_string;
 use std::path::PathBuf;
 use std::sync::{Arc, OnceLock};
 
+use anyhow::{anyhow, Context};
 use console::style;
 use minijinja::Value;
 use parking_lot::{RwLock, RwLockReadGuard, RwLockWriteGuard};
@@ -16,11 +17,11 @@ use crate::posts::Posts;
 use crate::tags::Tags;
 use crate::template::Template;
 
-const TEMPLATES_PATH: &str = "templates";
-const POSTS_PATH: &str = "posts";
-const PAGES_PATH: &str = "pages";
-const ASSETS_PATH: &str = "assets";
-const CONFIG_FILE_NAME: &str = "timug.yaml";
+pub const TEMPLATES_PATH: &str = "templates";
+pub const POSTS_PATH: &str = "posts";
+pub const PAGES_PATH: &str = "pages";
+pub const ASSETS_PATH: &str = "assets";
+pub const CONFIG_FILE_NAME: &str = "timug.yaml";
 
 static CONTEXT: OnceLock<RwLock<TimugContext>> = OnceLock::new();
 
@@ -38,31 +39,38 @@ pub struct TimugContext {
     pub posts: Arc<Posts>,
     pub tags: Tags,
     pub template: Template,
+    pub silent: bool,
 }
 
 impl TimugContext {
-    fn build(timug_path: Option<String>) -> Self {
-        let current_path = current_dir().expect("Failed to get current directory");
+    fn build(timug_path: Option<PathBuf>, silent: bool) -> anyhow::Result<Self> {
+        let current_path =
+            current_dir().map_err(|_| anyhow::anyhow!("Failed to get current directory"))?;
         let config_path = match timug_path {
-            Some(path) => path.into(),
+            Some(path) => path.join(CONFIG_FILE_NAME),
             None => current_path.join(CONFIG_FILE_NAME),
         };
 
-        println!(
-            "{}: {}",
-            style("Reading config file from").yellow().bold(),
-            config_path.display()
-        );
-        let config_content = read_to_string(&config_path).expect("Failed to read config file");
-        let config = from_str(&config_content).expect("Failed to parse config file");
+        if !silent {
+            println!(
+                "{}: {}",
+                style("Reading config file from").yellow().bold(),
+                config_path.display()
+            );
+        }
+
+        let config_content =
+            read_to_string(&config_path).map_err(|_| anyhow!("Failed to read config file"))?;
+        let config =
+            from_str(&config_content).map_err(|_| anyhow!("Failed to parse config file"))?;
         let templates_path = Self::get_path(&config, TEMPLATES_PATH).join(config.theme.clone());
-        let template = Template::new(templates_path.clone()).unwrap();
+        let template = Template::new(templates_path.clone(), silent)?;
 
         let posts_path = Self::get_path(&config, POSTS_PATH);
         let pages_path = Self::get_path(&config, PAGES_PATH);
         let statics_path = Self::get_path(&config, ASSETS_PATH);
 
-        Self {
+        Ok(Self {
             config,
             template,
             posts_path,
@@ -75,7 +83,8 @@ impl TimugContext {
             tags: Default::default(),
             pages: Default::default(),
             posts: Default::default(),
-        }
+            silent,
+        })
     }
 
     fn get_path(config: &TimugConfig, name: &str) -> PathBuf {
@@ -95,14 +104,24 @@ impl TimugContext {
     }
 }
 
+pub fn build_context(silent: bool, config_path: Option<PathBuf>) -> anyhow::Result<()> {
+    let context = TimugContext::build(config_path, silent)?;
+    let _ = CONTEXT.set(context.into());
+    Ok(())
+}
+
 pub fn get_context() -> RwLockReadGuard<'static, TimugContext> {
     CONTEXT
-        .get_or_init(|| TimugContext::build(None).into())
+        .get()
+        .context("Context not initialized")
+        .unwrap()
         .read()
 }
 
 pub fn get_mut_context() -> RwLockWriteGuard<'static, TimugContext> {
     CONTEXT
-        .get_or_init(|| TimugContext::build(None).into())
+        .get()
+        .context("Context not initialized")
+        .unwrap()
         .write()
 }
