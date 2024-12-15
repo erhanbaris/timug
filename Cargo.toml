@@ -26,7 +26,7 @@ console = "0.15.8"
 minijinja = { version = "2.5.0", features = ["loader"] }
 parking_lot = { version = "0.12.3", features = ["serde", "owning_ref", "arc_lock"] }
 pulldown-cmark = "0.12.2"
-pulldown-cmark-to-cmark = "19.0.0"
+pulldown-cmark-to-cmark = "20.0.0"
 run_shell = "0.1.13"
 serde = { version = "1.0.215", features = ["derive", "rc"] }
 serde_json = "1.0.133"
