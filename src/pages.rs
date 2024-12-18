@@ -43,9 +43,6 @@ impl Pages {
             // println!("{}: {}", "Parsed", file.display());
         }
 
-        self.items
-            .sort_unstable_by_key(|item| (item.order, item.title.clone()));
-
         Ok(())
     }
 

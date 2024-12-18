@@ -2,6 +2,14 @@ use std::{collections::HashMap, path::PathBuf};
 
 use serde::{Deserialize, Serialize};
 
+use crate::consts::{DEFAULT_DEPLOYMENT_FOLDER, DEFAULT_LANGUAGE, DEFAULT_THEME};
+
+#[derive(Debug, Default, PartialEq, Serialize, Deserialize)]
+pub struct NavItem {
+    pub name: String,
+    pub link: String,
+}
+
 #[derive(Debug, Default, PartialEq, Serialize, Deserialize)]
 pub struct TimugConfig {
     pub title: String,
@@ -24,7 +32,11 @@ pub struct TimugConfig {
     pub author: String,
     pub email: String,
 
+    #[serde(default)]
     pub contacts: Vec<Contact>,
+
+    #[serde(default)]
+    pub navs: Vec<NavItem>,
 
     #[serde(flatten)]
     pub other: HashMap<String, serde_yaml::value::Value>,
@@ -42,13 +54,13 @@ fn default_blog_path() -> PathBuf {
 }
 
 fn default_theme() -> String {
-    "default".to_string()
+    DEFAULT_THEME.to_string()
 }
 
 fn default_language() -> String {
-    "en".to_string()
+    DEFAULT_LANGUAGE.to_string()
 }
 
 fn default_deployment_folder() -> PathBuf {
-    default_blog_path().join("public")
+    default_blog_path().join(DEFAULT_DEPLOYMENT_FOLDER)
 }

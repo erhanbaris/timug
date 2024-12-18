@@ -1,10 +1,13 @@
-use std::path::{Path, PathBuf};
+use std::{
+    path::{Path, PathBuf},
+    time::Instant,
+};
 
 use anyhow::Context;
 use pulldown_cmark::{Options, Parser};
 use unidecode::unidecode;
 
-use crate::error::TimugError;
+use crate::{consts::SPARKLE, engine::create_engine, error::TimugError};
 
 pub fn get_file_name(path: &Path) -> anyhow::Result<String> {
     Ok(path
@@ -44,10 +47,7 @@ pub fn get_files(path: &PathBuf, extension: &str) -> anyhow::Result<Vec<PathBuf>
 pub fn get_file_content(path: &PathBuf) -> Result<String, TimugError> {
     match std::fs::read_to_string(path) {
         Ok(content) => Ok(content),
-        Err(error) => Err(TimugError::FileNotFound(
-            path.to_string_lossy().to_string(),
-            error.to_string(),
-        )),
+        Err(error) => Err(TimugError::FileNotFound(path.to_string_lossy().to_string(), error.to_string())),
     }
 }
 
@@ -105,12 +105,22 @@ pub fn parse_yaml_front_matter(content: &'_ str) -> FrontMatterInfo<'_> {
             content: &content[content_start_position..],
         }
     } else {
-        FrontMatterInfo {
-            metadata: None,
-            content,
-        }
+        FrontMatterInfo { metadata: None, content }
     }
 }
+
+pub fn inner_deploy_pages(silent: bool) -> anyhow::Result<()> {
+    let started = Instant::now();
+    let mut engine = create_engine(silent)?;
+    engine.run()?;
+
+    if !silent {
+        println!("{} Done in {:?} seconds", SPARKLE, started.elapsed().as_secs_f32());
+    }
+
+    Ok(())
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

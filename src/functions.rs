@@ -18,12 +18,7 @@ impl<'a> RenderEngine<'a> {
     fn post_url(lang: String, slug: String, state: &State) -> Result<Value, Error> {
         let posts = match state.lookup("posts") {
             Some(posts) => posts,
-            None => {
-                return Err(Error::new(
-                    ErrorKind::UndefinedError,
-                    "'posts' not found".to_string(),
-                ))
-            }
+            None => return Err(Error::new(ErrorKind::UndefinedError, "'posts' not found".to_string())),
         };
 
         let posts = match posts
@@ -31,43 +26,22 @@ impl<'a> RenderEngine<'a> {
             .and_then(|obj| obj.downcast_ref::<Posts>())
         {
             Some(posts) => posts,
-            None => {
-                return Err(Error::new(
-                    ErrorKind::UndefinedError,
-                    "'posts' is not a Posts type".to_string(),
-                ))
-            }
+            None => return Err(Error::new(ErrorKind::UndefinedError, "'posts' is not a Posts type".to_string())),
         };
 
         let post = match posts.posts.iter().find(|post| post.slug().as_str() == slug) {
             Some(post) => post,
-            None => {
-                return Err(Error::new(
-                    ErrorKind::UndefinedError,
-                    format!("Post (lang: '{}', slug: '{}') could not found", lang, slug),
-                ))
-            }
+            None => return Err(Error::new(ErrorKind::UndefinedError, format!("Post (lang: '{}', slug: '{}') could not found", lang, slug))),
         };
 
         let date = post.date();
-        Ok(Value::from_safe_string(format!(
-            "/{}/{}/{}/{}.html",
-            date.year(),
-            date.month(),
-            date.day(),
-            slug
-        )))
+        Ok(Value::from_safe_string(format!("/{}/{}/{}/{}.html", date.year(), date.month(), date.day(), slug)))
     }
 
     fn page_url(slug: String, state: &State) -> Result<Value, Error> {
         let pages = match state.lookup("pages") {
             Some(pages) => pages,
-            None => {
-                return Err(Error::new(
-                    ErrorKind::UndefinedError,
-                    "'pages' not found".to_string(),
-                ))
-            }
+            None => return Err(Error::new(ErrorKind::UndefinedError, "'pages' not found".to_string())),
         };
 
         let pages = match pages
@@ -75,22 +49,12 @@ impl<'a> RenderEngine<'a> {
             .and_then(|obj| obj.downcast_ref::<Pages>())
         {
             Some(pages) => pages,
-            None => {
-                return Err(Error::new(
-                    ErrorKind::UndefinedError,
-                    "'pages' is not a Posts type".to_string(),
-                ))
-            }
+            None => return Err(Error::new(ErrorKind::UndefinedError, "'pages' is not a Posts type".to_string())),
         };
 
         let page = match pages.items.iter().find(|page| page.slug == slug) {
             Some(page) => page,
-            None => {
-                return Err(Error::new(
-                    ErrorKind::UndefinedError,
-                    format!("Page (slug: '{}') could not found", slug),
-                ))
-            }
+            None => return Err(Error::new(ErrorKind::UndefinedError, format!("Page (slug: '{}') could not found", slug))),
         };
 
         Ok(Value::from_safe_string(format!("/{}.html", page.slug)))

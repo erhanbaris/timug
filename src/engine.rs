@@ -9,12 +9,15 @@ use anyhow::Context;
 use minijinja::{context, path_loader, Environment, Value};
 use subprocess::{Exec, Redirection};
 
+use crate::extensions::{alertbox::AlertBox, codeblock::Codeblock, contacts::Contacts, fontawesome::FontAwesome, gist::Gist, info::Info, projects::Projects, quote::Quote, reading::Reading, social_media_share::SocialMediaShare, stats::Stats};
+
 use crate::{
     context::{get_context, get_mut_context},
     extensions::Extension,
     pages::{Pages, POSTS_HTML},
     posts::{Posts, PostsContext},
-    tag::TagContext, tools::get_path,
+    tag::TagContext,
+    tools::get_path,
 };
 
 pub trait Renderable {
@@ -45,6 +48,14 @@ impl<'a> RenderEngine<'a> {
         self.build_globals();
         self.build_functions();
 
+        self.build_pages()?;
+        self.template_process()?;
+
+        Ok(())
+    }
+
+    pub fn build_pages(&mut self) -> anyhow::Result<()> {
+        self.clear_tags();
         self.parse_posts()?;
         self.parse_pages()?;
 
@@ -53,9 +64,13 @@ impl<'a> RenderEngine<'a> {
         self.generate_tags()?;
 
         self.move_statics()?;
-        self.template_process()?;
 
         Ok(())
+    }
+
+    pub fn clear_tags(&mut self) {
+        let mut ctx = get_mut_context();
+        ctx.tags.clear();
     }
 
     pub fn update_status(&self, status: String, message: &str) {
@@ -89,7 +104,7 @@ impl<'a> RenderEngine<'a> {
         drop(ctx);
     }
 
-    fn template_process(&mut self) -> anyhow::Result<()>  {
+    fn template_process(&mut self) -> anyhow::Result<()> {
         let ctx = get_context();
         let processes = &ctx.template.config.process;
         let current_dir = std::env::current_dir().unwrap();
@@ -177,7 +192,8 @@ impl<'a> RenderEngine<'a> {
             after_bodies => ctx.after_bodies,
             tags => ctx.tags,
             posts => ctx.posts_value,
-            pages => ctx.pages_value
+            pages => ctx.pages_value,
+            navs => ctx.config.navs
         }
     }
 
@@ -203,14 +219,13 @@ impl<'a> RenderEngine<'a> {
         std::fs::create_dir_all(&file_path)?;
 
         for (index, tag) in ctx.tags.iter().enumerate() {
-            tag.render(
-                self,
-                TagContext {
-                    folder: file_path.clone(),
-                    index,
-                    template_path: posts_page.path.clone(),
-                },
-            )?;
+            let ctx = TagContext {
+                folder: file_path.clone(),
+                index,
+                template_path: posts_page.path.clone(),
+            };
+
+            tag.render(self, ctx)?;
         }
 
         Ok(())
@@ -255,4 +270,20 @@ impl<'a> RenderEngine<'a> {
         //let content = Self::compress_html(content);
         Ok(file.write_all(content.as_bytes())?)
     }
+}
+
+pub fn create_engine(silent: bool) -> anyhow::Result<RenderEngine<'static>> {
+    let mut engine = RenderEngine::new(silent);
+    engine.register_extension::<Codeblock>()?;
+    engine.register_extension::<Quote>()?;
+    engine.register_extension::<Gist>()?;
+    engine.register_extension::<AlertBox>()?;
+    engine.register_extension::<FontAwesome>()?;
+    engine.register_extension::<Info>()?;
+    engine.register_extension::<SocialMediaShare>()?;
+    engine.register_extension::<Reading>()?;
+    engine.register_extension::<Projects>()?;
+    engine.register_extension::<Contacts>()?;
+    engine.register_extension::<Stats>()?;
+    Ok(engine)
 }

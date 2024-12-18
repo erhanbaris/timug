@@ -30,14 +30,9 @@ impl Renderable for Tag {
         let name = unidecode(&self.name).replace([' ', '\r', '\n', '\t'], "-");
         let context = engine.create_context();
         let file_name = ctx.folder.join(format!("{}.html", name.to_lowercase()));
-        engine.update_status(
-            style("Rendering tag").bold().cyan().to_string(),
-            get_file_name(&file_name)?.as_str(),
-        );
+        engine.update_status(style("Rendering tag").bold().cyan().to_string(), get_file_name(&file_name)?.as_str());
 
-        let posts = Value::from_object(Posts {
-            posts: self.posts.clone(),
-        });
+        let posts = Value::from_object(Posts { posts: self.posts.clone() });
 
         let template = engine.env.get_template(&ctx.template_path)?;
         let context = context! {
@@ -47,10 +42,7 @@ impl Renderable for Tag {
 
         let content = template.render(context)?;
         engine.compress_and_write(content, &file_name)?;
-        engine.update_status(
-            style("Generated tag").bold().green().to_string(),
-            get_file_name(&file_name)?.as_str(),
-        );
+        engine.update_status(style("Generated tag").bold().green().to_string(), get_file_name(&file_name)?.as_str());
         Ok(())
     }
 }
@@ -60,9 +52,7 @@ impl Object for Tag {
         let key = key.as_str()?;
         match key {
             "name" => Some(Value::from(self.name.as_str())),
-            "items" => Some(Value::from_iter(
-                self.posts.iter().cloned().map(Value::from_dyn_object),
-            )),
+            "items" => Some(Value::from_iter(self.posts.iter().cloned().map(Value::from_dyn_object))),
             _ => None,
         }
     }

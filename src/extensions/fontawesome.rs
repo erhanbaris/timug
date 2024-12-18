@@ -28,10 +28,7 @@ impl Object for FontAwesome {
 
     fn call(self: &Arc<Self>, _: &State<'_, '_>, args: &[Value]) -> Result<Value, Error> {
         let (style, icon, _): (&str, &str, Kwargs) = from_args(args)?;
-        Ok(Value::from_safe_string(format!(
-            "<i class=\"ml-1 mr-0.5 {} fa-{}\"></i>",
-            style, icon
-        )))
+        Ok(Value::from_safe_string(format!("<i class=\"ml-1 mr-0.5 {} fa-{}\"></i>", style, icon)))
     }
 }
 

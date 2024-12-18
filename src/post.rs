@@ -62,8 +62,7 @@ pub mod date_format {
         D: Deserializer<'de>,
     {
         let s = String::deserialize(deserializer)?;
-        let dt =
-            NaiveDateTime::parse_from_str(&s, DATE_FORMAT).map_err(serde::de::Error::custom)?;
+        let dt = NaiveDateTime::parse_from_str(&s, DATE_FORMAT).map_err(serde::de::Error::custom)?;
         Ok(DateTime::<Utc>::from_naive_utc_and_offset(dt, Utc))
     }
 }
@@ -76,13 +75,7 @@ impl Post {
 
     pub fn load_from_str(content: &str, path: &Path) -> Result<Self, TimugError> {
         let front_matter = parse_yaml_front_matter(content);
-        let mut post: InnerPost = serde_yaml::from_str(front_matter.metadata.unwrap_or_default())
-            .unwrap_or_else(|_| {
-                panic!(
-                    "Failed to parse post metadata information ({})",
-                    path.display()
-                )
-            });
+        let mut post: InnerPost = serde_yaml::from_str(front_matter.metadata.unwrap_or_default()).unwrap_or_else(|_| panic!("Failed to parse post metadata information ({})", path.display()));
 
         if post.slug.is_empty() {
             post.slug = path
@@ -94,9 +87,7 @@ impl Post {
         }
 
         post.content = front_matter.content.to_string();
-        Ok(Post {
-            inner: Arc::new(post.into()),
-        })
+        Ok(Post { inner: Arc::new(post.into()) })
     }
 
     pub fn title(&self) -> MappedRwLockReadGuard<'_, RawRwLock, String> {
@@ -155,18 +146,11 @@ mod tests {
         let dir = tempdir().unwrap();
         let file_path = dir.path().join("test_post.md");
         let mut file = File::create(&file_path).unwrap();
-        writeln!(
-            file,
-            "---\ntitle: Test Post\ndate: 2023-10-01 12:00:00\nslug: test-post\ntags: [\"rust\", \"test\"]\ndraft: false\n---\nThis is a test post."
-        )
-        .unwrap();
+        writeln!(file, "---\ntitle: Test Post\ndate: 2023-10-01 12:00:00\nslug: test-post\ntags: [\"rust\", \"test\"]\ndraft: false\n---\nThis is a test post.").unwrap();
 
         let post = Post::load_from_path(&file_path).unwrap();
         assert_eq!(post.title().as_str(), "Test Post");
-        assert_eq!(
-            post.date().format(DATE_FORMAT).to_string(),
-            "2023-10-01 12:00:00"
-        );
+        assert_eq!(post.date().format(DATE_FORMAT).to_string(), "2023-10-01 12:00:00");
         assert_eq!(post.slug().as_str(), "test-post");
         assert_eq!(post.tags(), vec!["rust", "test"]);
         assert_eq!(post.draft(), false);
@@ -179,10 +163,7 @@ mod tests {
         let path = Path::new("test_post.md");
         let post = Post::load_from_str(content, path).unwrap();
         assert_eq!(post.title().as_str(), "Test Post");
-        assert_eq!(
-            post.date().format(DATE_FORMAT).to_string(),
-            "2023-10-01 12:00:00"
-        );
+        assert_eq!(post.date().format(DATE_FORMAT).to_string(), "2023-10-01 12:00:00");
         assert_eq!(post.slug().as_str(), "test-post");
         assert_eq!(post.tags(), vec!["rust", "test"]);
         assert_eq!(post.draft(), false);
@@ -204,29 +185,11 @@ mod tests {
         let path = Path::new("test_post.md");
         let post = Arc::new(Post::load_from_str(content, path).unwrap());
 
-        assert_eq!(
-            post.get_value(&Value::from("title")).unwrap(),
-            Value::from("Test Post")
-        );
-        assert_eq!(
-            post.get_value(&Value::from("content")).unwrap(),
-            Value::from("This is a test post.")
-        );
-        assert_eq!(
-            post.get_value(&Value::from("date")).unwrap(),
-            Value::from("2023-10-01 12:00:00")
-        );
-        assert_eq!(
-            post.get_value(&Value::from("slug")).unwrap(),
-            Value::from("test-post")
-        );
-        assert_eq!(
-            post.get_value(&Value::from("tags")).unwrap(),
-            Value::from(vec!["rust", "test"])
-        );
-        assert_eq!(
-            post.get_value(&Value::from("draft")).unwrap(),
-            Value::from(false)
-        );
+        assert_eq!(post.get_value(&Value::from("title")).unwrap(), Value::from("Test Post"));
+        assert_eq!(post.get_value(&Value::from("content")).unwrap(), Value::from("This is a test post."));
+        assert_eq!(post.get_value(&Value::from("date")).unwrap(), Value::from("2023-10-01 12:00:00"));
+        assert_eq!(post.get_value(&Value::from("slug")).unwrap(), Value::from("test-post"));
+        assert_eq!(post.get_value(&Value::from("tags")).unwrap(), Value::from(vec!["rust", "test"]));
+        assert_eq!(post.get_value(&Value::from("draft")).unwrap(), Value::from(false));
     }
 }

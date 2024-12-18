@@ -10,7 +10,7 @@ use minijinja::{
 use serde::{Deserialize, Serialize};
 
 use crate::{
-    context::get_mut_context,
+    context::{get_context, get_mut_context},
     engine::{RenderEngine, Renderable},
     pages::POST_HTML,
     post::Post,
@@ -31,7 +31,7 @@ impl Posts {
         for file in files {
             let post = Arc::new(Post::load_from_path(&file)?);
 
-            if post.draft() {
+            if !ctx.draft && post.draft() {
                 continue;
             }
 
@@ -56,8 +56,10 @@ pub struct PostsContext {
 impl Renderable for Posts {
     type Context = PostsContext;
     fn render(&self, engine: &RenderEngine<'_>, ctx: PostsContext) -> anyhow::Result<()> {
+        let general_ctx = get_context();
+
         for (index, post) in self.posts.iter().enumerate() {
-            if post.draft() {
+            if !general_ctx.draft && post.draft() {
                 return Ok(());
             }
 
@@ -70,10 +72,7 @@ impl Renderable for Posts {
                 .join(date.day().to_string());
             let file_name = file_path.join(format!("{}.html", post.slug()));
 
-            engine.update_status(
-                style("Rendering post").bold().cyan().to_string(),
-                get_file_name(&file_name)?.as_str(),
-            );
+            engine.update_status(style("Rendering post").bold().cyan().to_string(), get_file_name(&file_name)?.as_str());
 
             if post.content().contains("{%") {
                 let content = engine.env.render_str(post.content().as_str(), &context)?;
@@ -97,10 +96,7 @@ impl Renderable for Posts {
             let content: String = template.render(context)?;
             std::fs::create_dir_all(file_path)?;
             engine.compress_and_write(content, &file_name)?;
-            engine.update_status(
-                style("Generated post").bold().green().to_string(),
-                get_file_name(&file_name)?.as_str(),
-            );
+            engine.update_status(style("Generated post").bold().green().to_string(), get_file_name(&file_name)?.as_str());
         }
 
         Ok(())

@@ -28,10 +28,7 @@ impl Object for Gist {
 
     fn call(self: &Arc<Self>, _: &State<'_, '_>, args: &[Value]) -> Result<Value, Error> {
         let (gist, filename, _): (&str, &str, Kwargs) = from_args(args)?;
-        Ok(Value::from_safe_string(format!(
-            "<script src=\"https://gist.github.com/{}.js?file={}\"></script>",
-            gist, filename
-        )))
+        Ok(Value::from_safe_string(format!("<script src=\"https://gist.github.com/{}.js?file={}\"></script>", gist, filename)))
     }
 }
 

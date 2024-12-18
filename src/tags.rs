@@ -36,10 +36,7 @@ impl Tags {
         let (tag, sort) = match self.tags.iter_mut().find(|item| item.name == name) {
             Some(tag) => (tag, false),
             None => {
-                let tag = Tag {
-                    name,
-                    posts: Vec::new(),
-                };
+                let tag = Tag { name, posts: Vec::new() };
 
                 self.tags.push(tag);
                 (self.tags.last_mut().unwrap(), true)
@@ -53,11 +50,12 @@ impl Tags {
         }
     }
 
+    pub fn clear(&mut self) {
+        self.tags.clear();
+    }
+
     pub fn iter(&self) -> TagsIterator {
-        TagsIterator {
-            tags: self,
-            index: 0,
-        }
+        TagsIterator { tags: self, index: 0 }
     }
 }
 

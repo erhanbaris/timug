@@ -34,12 +34,6 @@ pub struct Page {
     #[serde(default)]
     pub render: bool,
 
-    #[serde(default)]
-    pub order: i32,
-
-    #[serde(default, rename = "no-listing")]
-    pub no_listing: bool,
-
     #[serde(flatten)]
     other: HashMap<String, serde_yaml::value::Value>,
 }
@@ -77,9 +71,7 @@ fn from(value: &serde_yaml::Value) -> minijinja::Value {
         serde_yaml::Value::Bool(val) => minijinja::Value::from(*val),
         serde_yaml::Value::Number(val) => minijinja::Value::from(val.as_f64()),
         serde_yaml::Value::String(val) => minijinja::Value::from(val),
-        serde_yaml::Value::Sequence(vec) => {
-            minijinja::Value::from(vec.iter().map(from).collect::<Vec<_>>())
-        }
+        serde_yaml::Value::Sequence(vec) => minijinja::Value::from(vec.iter().map(from).collect::<Vec<_>>()),
         serde_yaml::Value::Mapping(mapping) => minijinja::Value::from(
             mapping
                 .into_iter()
@@ -103,7 +95,6 @@ impl Object for Page {
             "slug" => Some(Value::from(&self.slug)),
             "path" => Some(Value::from(&self.path)),
             "render" => Some(Value::from(self.render)),
-            "no_listing" => Some(Value::from(self.no_listing)),
             _ => None,
         }
     }
@@ -119,10 +110,7 @@ impl Renderable for Page {
         let ctx = get_context();
 
         let template = engine.env.get_template(&self.path)?;
-        engine.update_status(
-            style("Rendering page").bold().cyan().to_string(),
-            self.file_name.as_str(),
-        );
+        engine.update_status(style("Rendering page").bold().cyan().to_string(), self.file_name.as_str());
 
         let context = engine.create_context();
         let content = template.render(context)?;
@@ -134,10 +122,7 @@ impl Renderable for Page {
         let file_path = file_path.join(&self.file_name);
 
         engine.compress_and_write(content, &file_path)?;
-        engine.update_status(
-            style("Generated page").bold().green().to_string(),
-            self.file_name.as_str(),
-        );
+        engine.update_status(style("Generated page").bold().green().to_string(), self.file_name.as_str());
         Ok(())
     }
 }

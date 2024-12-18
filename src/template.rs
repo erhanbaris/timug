@@ -14,6 +14,7 @@ pub struct TemplateConfig {
     pub process: Vec<String>,
     #[serde(rename = "post-process")]
     pub post_process: Vec<String>,
+    pub version: String,
 }
 
 #[derive(Debug, Default)]
@@ -27,21 +28,12 @@ impl Template {
         let config_path = path.join("template.yaml");
 
         if !silent {
-            println!(
-                "{}: {}",
-                style("Reading template file from").yellow().bold(),
-                config_path.display()
-            );
+            println!("{}: {}", style("Reading template file from").yellow().bold(), config_path.display());
         }
 
-        let content = read_to_string(&config_path)
-            .map_err(|_| anyhow!("'{}' not found", config_path.display()))?;
-        let config: TemplateConfig = from_str(&content)
-            .map_err(|_| anyhow!("'{}' is not valid yaml format", config_path.display()))?;
+        let content = read_to_string(&config_path).map_err(|_| anyhow!("'{}' not found", config_path.display()))?;
+        let config: TemplateConfig = from_str(&content).map_err(|_| anyhow!("'{}' is not valid yaml format", config_path.display()))?;
 
-        Ok(Self {
-            config,
-            path: path.clone(),
-        })
+        Ok(Self { config, path: path.clone() })
     }
 }

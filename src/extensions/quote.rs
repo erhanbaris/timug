@@ -44,12 +44,9 @@ impl Object for Quote {
         let caller: Value = kwargs.get("caller")?;
         let content = caller.call(state, args!())?;
 
-        let content = content.as_str().ok_or_else(|| {
-            Error::new(
-                ErrorKind::InvalidOperation,
-                "call block did not return a string",
-            )
-        })?;
+        let content = content
+            .as_str()
+            .ok_or_else(|| Error::new(ErrorKind::InvalidOperation, "call block did not return a string"))?;
 
         let content = match ctx.get_template_page("quote.html") {
             Some(page) => render!(page.content.as_str(), content => content, position => position),

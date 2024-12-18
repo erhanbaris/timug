@@ -19,8 +19,21 @@ pub enum Commands {
     Init { path: PathBuf },
 
     /// Generate static pages
-    Deploy { config_path: Option<PathBuf> },
+    Deploy {
+        path: Option<PathBuf>,
+
+        /// Deploy draft posts
+        #[arg(short, long, action = clap::ArgAction::SetTrue)]
+        draft: bool,
+    },
 
     /// Start development server with live update
-    Start { config_path: Option<PathBuf> },
+    Start {
+        path: Option<PathBuf>,
+        port: Option<u16>,
+
+        /// Render draft posts
+        #[arg(short, long, action = clap::ArgAction::SetTrue)]
+        draft: bool,
+    },
 }

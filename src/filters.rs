@@ -18,12 +18,7 @@ impl<'a> RenderEngine<'a> {
 
         if let Some(value) = value.as_str() {
             let date_info = NaiveDateTime::parse_from_str(value, FORMAT)
-                .map_err(|_| {
-                    Error::new(
-                        ErrorKind::BadSerialization,
-                        format!("{} could converted into datetime", value),
-                    )
-                })?
+                .map_err(|_| Error::new(ErrorKind::BadSerialization, format!("{} could converted into datetime", value)))?
                 .format(&format);
             let formated_datetime = format!("{}", date_info);
             Ok(formated_datetime.into())

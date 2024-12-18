@@ -38,12 +38,9 @@ impl Object for AlertBox {
         let caller: Value = kwargs.get("caller")?;
         let content = caller.call(state, args!())?;
 
-        let content = content.as_str().ok_or_else(|| {
-            Error::new(
-                ErrorKind::InvalidOperation,
-                "call block did not return a string",
-            )
-        })?;
+        let content = content
+            .as_str()
+            .ok_or_else(|| Error::new(ErrorKind::InvalidOperation, "call block did not return a string"))?;
 
         let mut compiled_content = String::new();
         pulldown_cmark::html::push_html(&mut compiled_content, parse_yaml(content));

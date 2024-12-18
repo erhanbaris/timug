@@ -42,12 +42,7 @@ impl Object for Codeblock {
 
         let content = content
             .as_str()
-            .ok_or_else(|| {
-                Error::new(
-                    ErrorKind::InvalidOperation,
-                    "call block did not return a string",
-                )
-            })?
+            .ok_or_else(|| Error::new(ErrorKind::InvalidOperation, "call block did not return a string"))?
             .trim();
 
         let content = match ctx.get_template_page("codeblock.html") {
