@@ -9,6 +9,7 @@ use serde::{Deserialize, Serialize};
 use crate::{context::get_context, page::Page, tools::get_files};
 
 pub const POST_HTML: &str = "post.html";
+pub const PAGE_HTML: &str = "page.html";
 pub const POSTS_HTML: &str = "posts.html";
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
@@ -22,8 +23,9 @@ impl Pages {
         let html_files = get_files(&ctx.template.path, "html")?;
 
         for html_path in html_files.iter() {
-            self.items.push(Page::load_from_path(html_path)?.into());
-            // println!("{}: {}", "Parsed", html_path.display());
+            let page = Page::load_from_path(html_path)?;
+            self.items.push(page.into());
+            // log::trace!("{}: {}", "Parsed", html_path.display());
         }
 
         self.items
@@ -34,13 +36,19 @@ impl Pages {
 
     pub fn load_custom_pages(&mut self) -> anyhow::Result<()> {
         let ctx = get_context();
-        let files = get_files(&ctx.pages_path, "html")?;
+        let html_files = get_files(&ctx.pages_path, "html")?;
+        let md_files = get_files(&ctx.pages_path, "md")?;
 
-        for file in files {
+        for file in html_files {
             let mut page = Page::load_from_path(&file)?;
             page.render = true;
             self.items.push(page.into());
-            // println!("{}: {}", "Parsed", file.display());
+        }
+
+        for file in md_files {
+            let mut page = Page::load_from_path(&file)?;
+            page.render = true;
+            self.items.push(page.into());
         }
 
         Ok(())

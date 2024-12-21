@@ -9,7 +9,7 @@ use anyhow::Context;
 use minijinja::{context, path_loader, Environment, Value};
 use subprocess::{Exec, Redirection};
 
-use crate::extensions::{alertbox::AlertBox, codeblock::Codeblock, contacts::Contacts, fontawesome::FontAwesome, gist::Gist, info::Info, projects::Projects, quote::Quote, reading::Reading, social_media_share::SocialMediaShare, stats::Stats};
+use crate::extensions::{alertbox::AlertBox, analytics::Analytics, codeblock::Codeblock, contacts::Contacts, fontawesome::FontAwesome, gist::Gist, info::Info, projects::Projects, quote::Quote, reading::Reading, social_media_share::SocialMediaShare, stats::Stats};
 
 use crate::{
     context::{get_context, get_mut_context},
@@ -27,22 +27,23 @@ pub trait Renderable {
 
 pub struct RenderEngine<'a> {
     pub env: Environment<'a>,
-    pub silent: bool,
 }
 
 impl<'a> RenderEngine<'a> {
-    pub fn new(silent: bool) -> Self {
+    pub fn new() -> Self {
         let env = Environment::new();
 
-        Self { env, silent }
+        Self { env }
     }
 
     pub fn run(&mut self) -> anyhow::Result<()> {
         let ctx = get_context();
+
+        log::debug!("Template path: {}", ctx.template.path.display());
         self.env.set_loader(path_loader(ctx.template.path.clone()));
         drop(ctx);
 
-        self.pre_template_process();
+        self.pre_template_process()?;
 
         self.build_filters();
         self.build_globals();
@@ -63,7 +64,7 @@ impl<'a> RenderEngine<'a> {
         self.generate_posts()?;
         self.generate_tags()?;
 
-        self.move_statics()?;
+        self.move_assets()?;
 
         Ok(())
     }
@@ -74,58 +75,46 @@ impl<'a> RenderEngine<'a> {
     }
 
     pub fn update_status(&self, status: String, message: &str) {
-        if !self.silent {
-            println!("{}: {}", status, message);
-        }
+        log::debug!("{}: {}", status, message);
     }
 
-    fn pre_template_process(&mut self) {
+    fn pre_template_process(&mut self) -> anyhow::Result<()> {
         let ctx = get_context();
         let pre_processes = &ctx.template.config.pre_process;
-        let current_dir = std::env::current_dir().unwrap();
-        std::env::set_current_dir(&ctx.template.path).unwrap();
+        let current_dir = std::env::current_dir()?;
+        std::env::set_current_dir(&ctx.template.path)?;
+
         for process in pre_processes.iter() {
+            log::debug!("Template Preprocess: {}", process);
             let command = Exec::shell(process);
-            match self.silent {
-                true => {
-                    command
-                        .stdout(Redirection::Pipe)
-                        .stderr(Redirection::Merge)
-                        .capture()
-                        .unwrap()
-                        .stdout_str();
-                }
-                false => {
-                    command.join().unwrap();
-                }
-            };
+            let output = command
+                .stdout(Redirection::Pipe)
+                .stderr(Redirection::Merge)
+                .capture()?
+                .stdout_str();
+            log::debug!("Output: {}", output);
         }
-        std::env::set_current_dir(&current_dir).unwrap();
+        std::env::set_current_dir(&current_dir)?;
         drop(ctx);
+        Ok(())
     }
 
     fn template_process(&mut self) -> anyhow::Result<()> {
         let ctx = get_context();
         let processes = &ctx.template.config.process;
-        let current_dir = std::env::current_dir().unwrap();
-        std::env::set_current_dir(&ctx.template.path).unwrap();
+        let current_dir = std::env::current_dir()?;
+        std::env::set_current_dir(&ctx.template.path)?;
         for process in processes.iter() {
             let command = Exec::shell(process.replace("{publish-folder}", &get_path(&ctx.config.deployment_folder)?));
-            match self.silent {
-                true => {
-                    command
-                        .stdout(Redirection::Pipe)
-                        .stderr(Redirection::Merge)
-                        .capture()
-                        .unwrap()
-                        .stdout_str();
-                }
-                false => {
-                    command.join().unwrap();
-                }
-            };
+            log::debug!("Template Preprocess: {}", command.to_cmdline_lossy());
+            let output = command
+                .stdout(Redirection::Pipe)
+                .stderr(Redirection::Merge)
+                .capture()?
+                .stdout_str();
+            log::debug!("Output: {}", output);
         }
-        std::env::set_current_dir(&current_dir).unwrap();
+        std::env::set_current_dir(&current_dir)?;
         drop(ctx);
         Ok(())
     }
@@ -137,16 +126,13 @@ impl<'a> RenderEngine<'a> {
         if !T::header().is_empty() {
             ctx.headers.push(T::header());
         }
-
-        if !T::after_body().is_empty() {
-            ctx.after_bodies.push(T::after_body());
-        }
-
+        T::after_body(&mut ctx);
         drop(ctx);
         Ok(())
     }
 
     pub fn build_globals(&mut self) {
+        log::debug!("Build globals");
         let ctx = get_context();
         let config = &ctx.config;
         self.env.add_global("author_name", &config.author);
@@ -158,6 +144,7 @@ impl<'a> RenderEngine<'a> {
     }
 
     pub fn parse_posts(&mut self) -> anyhow::Result<()> {
+        log::debug!("Parse posts");
         let posts = Arc::new(Posts::load()?);
 
         let mut ctx = get_mut_context();
@@ -167,6 +154,7 @@ impl<'a> RenderEngine<'a> {
     }
 
     pub fn parse_pages(&mut self) -> anyhow::Result<()> {
+        log::debug!("Parse pages");
         let mut pages = Pages::default();
         pages.load_base_pages()?;
         pages.load_custom_pages()?;
@@ -193,11 +181,12 @@ impl<'a> RenderEngine<'a> {
             tags => ctx.tags,
             posts => ctx.posts_value,
             pages => ctx.pages_value,
-            navs => ctx.config.navs
+            navs => ctx.config.navs,
         }
     }
 
     pub fn generate_posts(&mut self) -> anyhow::Result<()> {
+        log::debug!("Generate posts");
         let ctx = get_context();
         let deployment_folder = ctx.config.blog_path.join(&ctx.config.deployment_folder);
 
@@ -208,6 +197,7 @@ impl<'a> RenderEngine<'a> {
     }
 
     pub fn generate_tags(&mut self) -> anyhow::Result<()> {
+        log::debug!("Generate tags");
         let ctx = get_context();
 
         let deployment_folder = ctx.config.blog_path.join(&ctx.config.deployment_folder);
@@ -245,7 +235,8 @@ impl<'a> RenderEngine<'a> {
         Ok(())
     }
 
-    pub fn move_statics(&mut self) -> anyhow::Result<()> {
+    pub fn move_assets(&mut self) -> anyhow::Result<()> {
+        log::debug!("Generate assets");
         let ctx = get_context();
 
         let deployment_folder = ctx
@@ -257,6 +248,7 @@ impl<'a> RenderEngine<'a> {
     }
 
     pub fn generate_pages(&mut self) -> anyhow::Result<()> {
+        log::debug!("Generate pages");
         let ctx = get_context();
         for page in ctx.pages.items.iter() {
             page.render(self, ())?;
@@ -272,8 +264,8 @@ impl<'a> RenderEngine<'a> {
     }
 }
 
-pub fn create_engine(silent: bool) -> anyhow::Result<RenderEngine<'static>> {
-    let mut engine = RenderEngine::new(silent);
+pub fn create_engine() -> anyhow::Result<RenderEngine<'static>> {
+    let mut engine = RenderEngine::new();
     engine.register_extension::<Codeblock>()?;
     engine.register_extension::<Quote>()?;
     engine.register_extension::<Gist>()?;
@@ -285,5 +277,6 @@ pub fn create_engine(silent: bool) -> anyhow::Result<RenderEngine<'static>> {
     engine.register_extension::<Projects>()?;
     engine.register_extension::<Contacts>()?;
     engine.register_extension::<Stats>()?;
+    engine.register_extension::<Analytics>()?;
     Ok(engine)
 }

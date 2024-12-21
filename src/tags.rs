@@ -32,14 +32,14 @@ pub struct Tags {
 }
 
 impl Tags {
-    pub fn add(&mut self, name: String, post: Arc<Post>) {
+    pub fn add(&mut self, name: String, post: Arc<Post>) -> Option<()> {
         let (tag, sort) = match self.tags.iter_mut().find(|item| item.name == name) {
             Some(tag) => (tag, false),
             None => {
                 let tag = Tag { name, posts: Vec::new() };
 
                 self.tags.push(tag);
-                (self.tags.last_mut().unwrap(), true)
+                (self.tags.last_mut()?, true)
             }
         };
 
@@ -48,6 +48,8 @@ impl Tags {
         if sort {
             self.tags.sort_by(|x, y| x.name.cmp(&y.name));
         }
+
+        Some(())
     }
 
     pub fn clear(&mut self) {

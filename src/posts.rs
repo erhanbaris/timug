@@ -1,5 +1,6 @@
 use std::{path::PathBuf, sync::Arc};
 
+use anyhow::Context;
 use chrono::Datelike;
 use console::style;
 use minijinja::{
@@ -36,11 +37,13 @@ impl Posts {
             }
 
             for tag in post.tags() {
-                ctx.tags.add(tag, post.clone());
+                ctx.tags
+                    .add(tag, post.clone())
+                    .context(anyhow::anyhow!("Failed to add tag"))?;
             }
 
             posts.push(post);
-            // println!("{}: {}", "Parsed", file.display());
+            // log::trace!("{}: {}", "Parsed", file.display());
         }
 
         posts.sort_by_key(|b| std::cmp::Reverse(b.date()));

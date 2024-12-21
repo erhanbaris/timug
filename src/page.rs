@@ -1,18 +1,28 @@
 use std::{
     collections::HashMap,
     path::{Path, PathBuf},
+    str::FromStr,
     sync::Arc,
 };
 
 use console::style;
-use minijinja::{value::Object, Value};
+use minijinja::{context, value::Object, Value};
 use serde::{Deserialize, Serialize};
 
 use crate::{
     context::get_context,
     engine::{RenderEngine, Renderable},
-    tools::{get_file_content, get_file_name, get_path, parse_yaml_front_matter},
+    pages::PAGE_HTML,
+    tools::{get_file_content, get_file_name, get_path, parse_yaml, parse_yaml_front_matter},
 };
+
+#[derive(Debug, Default, Serialize, Deserialize)]
+pub enum PageType {
+    Html,
+
+    #[default]
+    Markdown,
+}
 
 #[derive(Debug, Default, Serialize, Deserialize)]
 pub struct Page {
@@ -30,6 +40,12 @@ pub struct Page {
 
     #[serde(default)]
     pub content: String,
+
+    #[serde(default)]
+    pub draft: bool,
+
+    #[serde(skip)]
+    pub page_type: PageType,
 
     #[serde(default)]
     pub render: bool,
@@ -58,8 +74,20 @@ impl Page {
             page.title = page.file_name.clone();
         }
 
+        page.page_type = match page.file_name.to_lowercase().ends_with(".html") || page.file_name.to_lowercase().ends_with(".htm") {
+            true => PageType::Html,
+            false => PageType::Markdown,
+        };
+
         if page.slug.is_empty() {
-            page.slug = page.file_name.replace(".html", "");
+            page.slug = match page.page_type {
+                PageType::Html => page
+                    .file_name
+                    .to_lowercase()
+                    .replace(".html", "")
+                    .replace(".htm", ""),
+                PageType::Markdown => page.file_name.to_lowercase().replace(".md", ""),
+            };
         }
         Ok(page)
     }
@@ -94,7 +122,7 @@ impl Object for Page {
             "title" => Some(Value::from(&self.title)),
             "slug" => Some(Value::from(&self.slug)),
             "path" => Some(Value::from(&self.path)),
-            "render" => Some(Value::from(self.render)),
+            "draft" => Some(Value::from(self.draft)),
             _ => None,
         }
     }
@@ -108,21 +136,56 @@ impl Renderable for Page {
         }
 
         let ctx = get_context();
+        if !ctx.draft && self.draft {
+            return Ok(());
+        }
 
-        let template = engine.env.get_template(&self.path)?;
-        engine.update_status(style("Rendering page").bold().cyan().to_string(), self.file_name.as_str());
-
-        let context = engine.create_context();
-        let content = template.render(context)?;
-
-        let file_path = ctx
+        let source_path = PathBuf::from_str(self.path.as_str())?;
+        let publish_path = ctx
             .config
             .blog_path
             .join(ctx.config.deployment_folder.clone());
-        let file_path = file_path.join(&self.file_name);
 
-        engine.compress_and_write(content, &file_path)?;
-        engine.update_status(style("Generated page").bold().green().to_string(), self.file_name.as_str());
-        Ok(())
+        if let PageType::Html = self.page_type {
+            let target_file_path = publish_path.join(&self.file_name);
+            let template = engine.env.get_template(&self.path)?;
+            engine.update_status(style("Rendering page").bold().cyan().to_string(), self.file_name.as_str());
+
+            let context = engine.create_context();
+            let content = template.render(context)?;
+
+            engine.compress_and_write(content, &target_file_path)?;
+            engine.update_status(style("Generated page").bold().green().to_string(), self.file_name.as_str());
+            Ok(())
+        } else {
+            let target_file_path = publish_path.join(self.file_name.to_lowercase().replace("md", "html"));
+            let context = engine.create_context();
+            let mut content: String = get_file_content(&source_path)?;
+
+            engine.update_status(style("Rendering page").bold().cyan().to_string(), get_file_name(&source_path)?.as_str());
+
+            if content.contains("{%") {
+                let content_tmp = engine.env.render_str(content.as_str(), &context)?;
+                content = content_tmp;
+            }
+
+            let mut content_tmp = String::new();
+            let parsed = parse_yaml(content.as_str());
+            pulldown_cmark::html::push_html(&mut content_tmp, parsed);
+
+            let template = engine.env.get_template(PAGE_HTML)?;
+            let context = context! {
+                ..context! {
+                    title => self.title.clone(),
+                    content => content_tmp,
+                },
+                ..context.clone()
+            };
+
+            let content: String = template.render(context)?;
+            engine.compress_and_write(content, &target_file_path)?;
+            engine.update_status(style("Generated page").bold().green().to_string(), get_file_name(&target_file_path)?.as_str());
+            Ok(())
+        }
     }
 }

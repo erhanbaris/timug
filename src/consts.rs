@@ -6,8 +6,8 @@ use rust_embed::Embed;
 pub struct TemplateAssets;
 
 #[derive(Embed)]
-#[folder = "example"]
-pub struct ExampleAssets;
+#[folder = "examples"]
+pub struct ExamplesAssets;
 
 pub const DEFAULT_DEPLOYMENT_FOLDER: &str = "public";
 pub const DEFAULT_LANGUAGE: &str = "en";

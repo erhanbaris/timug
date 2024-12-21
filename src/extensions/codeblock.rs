@@ -1,12 +1,13 @@
-use std::sync::Arc;
+use std::{borrow::Cow, sync::Arc};
 
 use minijinja::{
     args, render,
     value::{from_args, Kwargs, Object, ObjectRepr},
     Error, ErrorKind, State, Value,
 };
+use parking_lot::RwLockWriteGuard;
 
-use crate::context::get_context;
+use crate::context::{get_context, TimugContext};
 
 use super::Extension;
 
@@ -69,13 +70,15 @@ impl<'a> Extension<'a> for Codeblock {
 <link rel="stylesheet" href="https://unpkg.com/@highlightjs/cdn-assets@11.9.0/styles/atom-one-dark.min.css" />"#
     }
 
-    fn after_body() -> &'static str {
-        r#"<script>
+    fn after_body(ctx: &'_ mut RwLockWriteGuard<'static, TimugContext>) {
+        ctx.after_bodies.push(Cow::Borrowed(
+            r#"<script>
 document.addEventListener('DOMContentLoaded', (event) => {
     document.querySelectorAll('pre code').forEach((block) => {
         hljs.highlightBlock(block);
     });
 });
-</script>"#
+</script>"#,
+        ))
     }
 }

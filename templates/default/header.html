@@ -5,10 +5,8 @@
     </div>
     <div class="flex place-content-center items-center md:w-auto w-full" id="menu">
         <ul class="flex items-center justify-between text-base text-white pt-4 md:pt-0 flex-wrap gap-2 md:gap-0">
-          {%- for page in pages %}
-          {% if page.render and page.no_listing == false %}
-          <li><a class="md:p-3 py-1 px-0 block" href="{{ page_url(page.slug) }}">{{ page.title }}</a></li>
-          {% endif %}
+          {%- for item in config.navs %}
+          <li><a class="md:p-3 py-1 px-0 block" href="{{ item.link }}">{{ item.name }}</a></li>
           {% endfor %}
         </ul>
     </div>

@@ -1,3 +1,4 @@
+use std::borrow::Cow;
 use std::env::current_dir;
 use std::fs::read_to_string;
 use std::path::PathBuf;
@@ -28,7 +29,7 @@ pub struct TimugContext {
     pub pages_path: PathBuf,
     pub statics_path: PathBuf,
     pub headers: Vec<&'static str>,
-    pub after_bodies: Vec<&'static str>,
+    pub after_bodies: Vec<Cow<'static, str>>,
     pub posts_value: Value,
     pub pages_value: Value,
     pub pages: Arc<Pages>,
@@ -40,7 +41,7 @@ pub struct TimugContext {
 }
 
 impl TimugContext {
-    fn build(timug_path: Option<PathBuf>, silent: bool, draft: bool) -> anyhow::Result<Self> {
+    fn build(timug_path: Option<PathBuf>, draft: bool) -> anyhow::Result<Self> {
         let timug_path = match timug_path {
             Some(path) => match path.is_absolute() {
                 true => path,
@@ -53,25 +54,23 @@ impl TimugContext {
         };
 
         let config_path = timug_path.join(CONFIG_FILE_NAME);
-        if !silent {
-            println!("{}: {}", style("Reading config file from").yellow().bold(), config_path.display());
-        }
+        log::debug!("{}: {}", style("Reading config file from").yellow().bold(), config_path.display());
 
         let config_content = read_to_string(&config_path).map_err(|_| anyhow!("Failed to read config file"))?;
         let mut config: TimugConfig = from_str(&config_content).map_err(|_| anyhow!("Failed to parse config file"))?;
 
         if !config.blog_path.is_absolute() {
             config.blog_path = timug_path.join(config.blog_path).canonicalize()?;
-            println!("Blog path: {:?}", style(&config.blog_path).yellow());
+            log::debug!("Blog path: {:?}", style(&config.blog_path).yellow());
         }
 
         if !config.deployment_folder.is_absolute() {
             config.deployment_folder = timug_path.join(config.deployment_folder).canonicalize()?;
-            println!("Deployment path: {:?}", style(&config.deployment_folder).yellow());
+            log::debug!("Deployment path: {:?}", style(&config.deployment_folder).yellow());
         }
 
         let templates_path = Self::get_path(&config, TEMPLATES_PATH).join(config.theme.clone());
-        let template = Template::new(templates_path.clone(), silent)?;
+        let template = Template::new(templates_path.clone())?;
 
         let posts_path = Self::get_path(&config, POSTS_PATH);
         let pages_path = Self::get_path(&config, PAGES_PATH);
@@ -88,7 +87,7 @@ impl TimugContext {
         {
             Ok(Ok(output)) => match PathBuf::from_str(output.trim()) {
                 Ok(path) => {
-                    println!("Git path: {:?}", style(&path).yellow());
+                    log::debug!("Git path: {:?}", style(&path).yellow());
                     Some(path)
                 }
                 _ => None,
@@ -133,8 +132,8 @@ impl TimugContext {
     }
 }
 
-pub fn build_context(silent: bool, config_path: Option<PathBuf>, draft: bool) -> anyhow::Result<()> {
-    let context = TimugContext::build(config_path, silent, draft)?;
+pub fn build_context(config_path: Option<PathBuf>, draft: bool) -> anyhow::Result<()> {
+    let context = TimugContext::build(config_path, draft)?;
     let _ = CONTEXT.set(context.into());
     Ok(())
 }

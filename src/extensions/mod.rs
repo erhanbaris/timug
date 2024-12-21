@@ -1,6 +1,10 @@
 use minijinja::Environment;
+use parking_lot::RwLockWriteGuard;
+
+use crate::context::TimugContext;
 
 pub mod alertbox;
+pub mod analytics;
 pub mod codeblock;
 pub mod contacts;
 pub mod fontawesome;
@@ -18,7 +22,5 @@ pub trait Extension<'a> {
     fn header() -> &'static str {
         ""
     }
-    fn after_body() -> &'static str {
-        ""
-    }
+    fn after_body(_: &'_ mut RwLockWriteGuard<'static, TimugContext>) {}
 }

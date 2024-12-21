@@ -109,16 +109,22 @@ pub fn parse_yaml_front_matter(content: &'_ str) -> FrontMatterInfo<'_> {
     }
 }
 
-pub fn inner_deploy_pages(silent: bool) -> anyhow::Result<()> {
+pub fn inner_deploy_pages() -> anyhow::Result<()> {
     let started = Instant::now();
-    let mut engine = create_engine(silent)?;
+    let mut engine = create_engine()?;
     engine.run()?;
 
-    if !silent {
-        println!("{} Done in {:?} seconds", SPARKLE, started.elapsed().as_secs_f32());
-    }
+    log::debug!("{} Done in {:?} seconds", SPARKLE, started.elapsed().as_secs_f32());
 
     Ok(())
+}
+
+pub fn get_slug(title: &str) -> String {
+    title
+        .to_lowercase()
+        .replace(" ", "-")
+        .replace(",", "")
+        .replace(".", "")
 }
 
 #[cfg(test)]

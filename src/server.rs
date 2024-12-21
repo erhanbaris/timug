@@ -26,7 +26,7 @@ pub fn start_webserver(port: Option<u16>) -> anyhow::Result<()> {
                 let addr = SocketAddr::from(([0, 0, 0, 0], port.unwrap_or(DEFAULT_WEBSERVER_PORT)));
                 let listener = tokio::net::TcpListener::bind(addr).await.unwrap();
 
-                println!("Serving on {}", style(format!("http:://{}/", listener.local_addr().unwrap())).blue());
+                log::info!("Serving on {}", style(format!("http:://{}/", listener.local_addr().unwrap())).blue());
 
                 axum::serve(listener, app.layer(TraceLayer::new_for_http()))
                     .await
@@ -62,11 +62,11 @@ fn change_watcher() -> anyhow::Result<()> {
                 let is_deployment_folder = path.starts_with(&deployment_folder);
 
                 if !is_deployment_folder && !is_git_folder {
-                    println!("{} has been updated", style(path.display()).yellow());
+                    log::info!("{} has been updated", style(path.display()).yellow());
 
                     if need_rebuilding {
                         need_rebuilding = false;
-                        let _ = inner_deploy_pages(true);
+                        let _ = inner_deploy_pages();
                     }
                 }
             }),

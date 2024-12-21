@@ -24,12 +24,9 @@ pub struct Template {
 }
 
 impl Template {
-    pub fn new(path: PathBuf, silent: bool) -> Result<Self> {
+    pub fn new(path: PathBuf) -> Result<Self> {
         let config_path = path.join("template.yaml");
-
-        if !silent {
-            println!("{}: {}", style("Reading template file from").yellow().bold(), config_path.display());
-        }
+        log::debug!("{}: {}", style("Reading template file from").yellow().bold(), config_path.display());
 
         let content = read_to_string(&config_path).map_err(|_| anyhow!("'{}' not found", config_path.display()))?;
         let config: TemplateConfig = from_str(&content).map_err(|_| anyhow!("'{}' is not valid yaml format", config_path.display()))?;
