@@ -144,3 +144,147 @@ analytics: # Analytics services
 stats: # Stats for the blog
     link: https://timug-page-infos-2.erhanbaris.workers.dev/
 ```
+
+## Templating
+Jinja2 template engine syntax is used for templating. You can use allmost all features of Jinja2 template engine. To get more information about supported syntax, you can take a look at (MiniJinja)[https://github.com/mitsuhiko/minijinja].
+
+There are some built-in components, functions and filters. Here is the list of them:
+
+### Functions
+- **current_year**: Get current year. You can use it like that: `{{ current_year() }}`
+- **post_url**: Get post URL. You can use it like that: `{{ post_url(post.slug) }}`
+- **page_url**: Get page URL. You can use it like that: `{{ page_url(page.slug) }}`
+
+### Filters
+- **formatdatetime**: Convert date and time to spesific format. You can use it like that: `{{ post.date | formatdatetime("%B %d, %Y") }}`
+- **url_encode**: Encode a string to URL format. You can use it like that: `{{ post.title | url_encode }}`
+
+
+### Components
+The component is a reusable part of the template. You can use it with **call** keyword. It uses the default template for rendering but it can be changed in the new template with a specific html file. New component template file should be located under the root template folder.
+
+Here is the list of components:
+
+#### **alertbox**
+Create an alert box.
+
+**Function arguments:**
+
+| Argument | Information | Example | 
+| ---------------- | ------ | ---- |
+| style | It uses css class as a style | `success`, `fail` or `info` |
+| title | Info boxes title             | `Pros` |
+
+**Template arguments:**
+
+| Argument | Information | Example | 
+| ---------------- | ------ | ---- |
+| content | Html body | `<b> Hello world </b>` |
+| style | Class name             | `success`, `fail` or `info` |
+| title | Info boxes title             | `Pros` |
+
+Template name: **alertbox.html**
+
+**Usage:**
+```jinja
+{% call alertbox('success', 'Pros') %}
+1. Easy to use
+2. Wiring diagram simple
+3. Easy to coding
+{% endcall %}
+```
+
+#### **quote**
+Create a quote block.
+
+**Function arguments:**
+| Argument | Information | Example |
+| ---------------- | ------ | ---- |
+| position | it can be `right`, `left` or `center` to align quote | `center` |
+
+
+**Template arguments:**
+| Argument | Information | Example |
+| ---------------- | ------ | ---- |
+| content | Html body | `<b> Hello world </b>` |
+| position | it can be `right`, `left` or `center` to align quote | `center` |
+
+Template name: **quote.html**
+
+**Usage:**
+```jinja
+{% call quote('right') %}
+"Details matter. It’s worth waiting to get it right."
+<br>
+Steve Jobs
+{% endcall %}
+```
+
+#### **codeblock**
+Create a formated code block. It uses highlight.js for syntax highlighting.
+
+**Function arguments:**
+| Argument | Information | Example |
+| ---------------- | ------ | ---- |
+| lang | Programming languages short name | `rust` |
+
+Template name: no templating.
+
+**Usage:**
+```jinja
+{% call codeblock('bash') %}
+xcode-select --install
+{% endcall %}
+```
+
+#### **contacts**
+Contact information block. It can be used in the footer or in the contact page. It uses fontawesome v5 icons. You should update **timug.yaml** file to use it.
+
+**Function arguments:**
+No arguments needed.
+
+
+**Template arguments:**
+| Argument | Information | Example |
+| ---------------- | ------ | ---- |
+| contacts | List of `icon: String`, `name: String`, `address: String`. It is not json format. | `[{'icon': 'fas fa-at', 'name': 'email', 'address': 'erhanbaris@gmail.com'}]` |
+
+Template name: **contacts.html**
+**Usage:**
+```jinja
+{% call contacts() %} {% endcall %}
+```
+
+#### **gist**
+Github gist block. It can be used to embed a gist to the blog post.
+
+**Function arguments:**
+| Argument | Information | Example |
+| ---------------- | ------ | ---- |
+| path | GitHup gist path | `erhanbaris/bc6d9683a3e2d278851667e32759d585` |
+| title | GitHup gist title | `vibration_test_output` |
+
+Template name: no templating.
+
+**Usage:**
+```jinja
+{% call gist('erhanbaris/bc6d9683a3e2d278851667e32759d585', 'vibration_test_output') %}{% endcall %}
+```
+
+#### **info**
+Create an info block.
+
+**Template arguments:**
+
+| Argument | Information | Example | 
+| ---------------- | ------ | ---- |
+| content | Html body | `<b> Hello world </b>` |
+
+Template name: **info.html**
+
+**Usage:**
+```jinja
+{% call info() %}
+Hello world
+{% endcall %}
+```
