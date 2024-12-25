@@ -117,7 +117,7 @@ pub fn inner_deploy_pages() -> Result<()> {
     let mut engine = create_engine()?;
     engine.run()?;
 
-    log::debug!("{} Done in {:?} seconds", SPARKLE, started.elapsed().as_secs_f32());
+    log::info!("{} Done in {:?} seconds", SPARKLE, started.elapsed().as_secs_f32());
 
     Ok(())
 }

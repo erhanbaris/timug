@@ -270,8 +270,7 @@ impl<'a> RenderEngine<'a> {
 
     pub fn write(&self, content: String, path: &PathBuf) -> crate::error::Result<()> {
         let mut file = File::create(path).context(FileCreationFailedSnafu { path })?;
-        file
-            .write_all(content.as_bytes())
+        file.write_all(content.as_bytes())
             .context(WriteSnafu { path })
     }
 }

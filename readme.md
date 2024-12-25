@@ -288,3 +288,82 @@ Template name: **info.html**
 Hello world
 {% endcall %}
 ```
+
+#### **projects**
+Projects block. It can be used in the footer or in the contact page. You should update **timug.yaml** file to use it.
+
+**Template arguments:**
+
+| Argument | Information | Example |
+| ---------------- | ------ | ---- |
+| contacts | List of `name: String`, `link: String`, `description: Option<String>`. It is not json format. | `[{'name': 'Timug', 'link': 'https://github.com/erhanbaris/timug', 'description': 'Static page generator'}]` |
+
+Template name: **projects.html**
+
+**Usage:**
+```jinja
+{% call projects() %} {% endcall %}
+```
+
+#### **reading**
+Currently reading block. It can be used in the footer or in the contact page. You should update **timug.yaml** file to use it.
+
+**Template arguments:**
+
+| Argument | Information | Example |
+| ---------------- | ------ | ---- |
+| contacts | List of `name: String`, `author: String`, `image: String`, `link: String`. It is not json format. | `[{'name': 'A Philosophy of Software Design', 'link': 'https://www.goodreads.com/book/show/39996759-a-philosophy-of-software-design', 'author': 'John Ousterhout', 'image': 'https://images-na.ssl-images-amazon.com/images/S/compressed.photo.goodreads.com/books/1531857377i/39996759.jpg'}]` |
+
+Template name: **reading.html**
+
+**Usage:**
+```jinja
+{% call reading() %} {% endcall %}
+```
+
+#### **social_media_share**
+Social media share buttons. Adds **Facebook**, **Twitter**, **Linkedin**, **Reddit** and **Hacker News** share buttons to posts.
+
+**Function arguments:**
+
+| Argument | Information | Example |
+| ---------------- | ------ | ---- |
+| data | Post data |  |
+
+**Template arguments:**
+
+| Argument | Information | Example |
+| ---------------- | ------ | ---- |
+| data | Post data |  |
+| posts | List of post data |  |
+| pages | List of page data |  |
+
+Template name: **social_media_share.html**
+
+**Usage:**
+```jinja
+{% call social_media_share(data) %} {% endcall %}
+```
+
+#### **stats**
+This is a special block for stateless stat information. It requires extra configuration and setup. The details will provided later on. You should update **timug.yaml** file to use it.
+
+**Function arguments:**
+
+| Argument | Information | Example |
+| ---------------- | ------ | ---- |
+| slug | Post's slug information | hello-world  |
+
+**Template arguments:**
+
+| Argument | Information | Example |
+| ---------------- | ------ | ---- |
+| slug | Post's slug information | hello-world  |
+| scripts | CookieJS script | hello-world  |
+
+Template name: **stats.html**
+
+**Usage:**
+```jinja
+{% call stats(data.slug) %} {% endcall %}
+```

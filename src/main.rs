@@ -63,6 +63,7 @@ fn main() -> Result<()> {
         .filter(Some("timug"), level_filter)
         .init();
 
+    log::info!("Timug v{}", env!("CARGO_PKG_VERSION"));
     let result = match cli.command {
         cli::Commands::Init => start_create_new_project(cli.path),
         cli::Commands::Deploy { draft } => start_deploy_pages(cli.path, draft),

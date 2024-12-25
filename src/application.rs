@@ -113,6 +113,7 @@ pub fn start_server(path: Option<PathBuf>, port: Option<u16>, draft: bool) -> cr
 
 pub fn start_deploy_pages(path: Option<PathBuf>, draft: bool) -> crate::Result<()> {
     initialize(path.clone(), draft)?;
+    log::info!("Deployment started");
     inner_deploy_pages()
 }
 
