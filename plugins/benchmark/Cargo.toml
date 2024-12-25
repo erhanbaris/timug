@@ -1,0 +1,10 @@
+[package]
+name = "benchmark"
+version = "0.1.0"
+edition = "2021"
+authors = [ "Erhan BARIS <erhanbaris@gmail.com>" ]
+
+[dependencies]
+lipsum = "0.9.1"
+rand = "0.8.5"
+rand_hc = "0.3.2"

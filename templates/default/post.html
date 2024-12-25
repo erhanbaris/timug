@@ -1,9 +1,9 @@
 {% extends "base.html" %}
-{% block title %}{{ post.title }}{% endblock %}
+{% block title %}{{ data.title }}{% endblock %}
 {% block body %}
 
 <div class="">
-  <h1 href="#" class="text-gray-900 font-header text-2xl md:text-4xl">{{ post.title }}</h1>
+  <h1 href="#" class="text-gray-900 font-header text-2xl md:text-4xl">{{ data.title }}</h1>
   <div class="py-5 text-sm font-regular text-gray-900 flex flex-wrap leading-6">
     <span class="mr-3 flex flex-row items-center">
       <svg class="text-indigo-600" fill="currentColor" height="13px" width="13px" version="1.1" id="Layer_1"
@@ -17,7 +17,7 @@
           </g>
         </g>
       </svg>
-      <span class="ml-1 text-nowrap text-gray-400">{{ post.date | formatdatetime("%B %d, %Y") }}</span>
+      <span class="ml-1 text-nowrap text-gray-400">{{ data.date | formatdatetime("%B %d, %Y") }}</span>
     </span>
 
     <span href="#" class="flex flex-row items-center hover:text-indigo-600  mr-3">
@@ -31,7 +31,7 @@
       <span class="ml-1 text-nowrap text-gray-500">{{ author_name }}</span>
     </span>
 
-    {%- for tag in post.tags %}
+    {%- for tag in data.tags %}
     <a href="#"
       class="ml-4 text-xs text-indigo-600 font-medium hover:text-gray-900 transition duration-500 ease-in-out">
       <a href="/tags/{{ tag | url_encode }}.html" class="flex flex-row items-center hover:text-indigo-600">
@@ -48,18 +48,18 @@
   </div>
   <hr>
   <div class="post text-justify">
-    {{ post.content|safe }}
+    {{ content|safe }}
   </div>
   <hr>
-  {% call stats(post.slug) %} {% endcall %}
+  {% call stats(data.slug) %} {% endcall %}
   <hr>
-  {% call social_media_share(post) %}{% endcall %}
+  {% call social_media_share(data) %}{% endcall %}
   <hr>
   <div class="grid grid-cols-2 gap-1 mt-5">
     <!-- Left -->
     {% set previous_post = posts[index+1] %}
     {% if posts | length > index+1 %}
-    <a href="{{ post_url(previous_post.lang, previous_post.slug) }}">
+    <a href="{{ post_url(previous_post.slug) }}">
       <div class="flex text-sm group">
         <div class="flex-none mr-3 flex items-center">
           <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
@@ -83,7 +83,7 @@
     <!-- Right -->
     {% set next_post = posts[index-1] %}
     {% if index > 0 %}
-    <a href="{{ post_url(next_post.lang, next_post.slug) }}" class="flex justify-end">
+    <a href="{{ post_url(next_post.slug) }}" class="flex justify-end">
     <div class="flex text-sm group">
       <div class="shrink gap-1 text-sm">
         <div class="text-end font-medium">Next Post</div>

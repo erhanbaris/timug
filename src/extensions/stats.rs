@@ -3,7 +3,7 @@ use std::sync::Arc;
 use minijinja::{
     render,
     value::{from_args, Kwargs, Object, ObjectRepr},
-    Error, State, Value,
+    Error, ErrorKind, State, Value,
 };
 use serde::{Deserialize, Serialize};
 use urlencoding::encode;
@@ -100,7 +100,7 @@ impl Object for Stats {
     }
 
     fn call(self: &Arc<Self>, state: &State<'_, '_>, args: &[Value]) -> Result<Value, Error> {
-        let ctx = get_context();
+        let ctx = get_context(snafu::location!()).map_err(|err| Error::new(ErrorKind::InvalidOperation, err.to_string()))?;
         if let Some(config) = ctx.get_config::<StatsInfo>(Self::name()) {
             let (slug, _): (&str, Kwargs) = from_args(args)?;
             let env = state.env();

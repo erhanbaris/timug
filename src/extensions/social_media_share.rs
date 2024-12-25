@@ -3,7 +3,7 @@ use std::sync::Arc;
 use minijinja::{
     render,
     value::{from_args, Kwargs, Object, ObjectRepr},
-    Error, State, Value,
+    Error, ErrorKind, State, Value,
 };
 
 use crate::context::get_context;
@@ -32,17 +32,17 @@ impl Object for SocialMediaShare {
     }
 
     fn call(self: &Arc<Self>, state: &State<'_, '_>, args: &[Value]) -> Result<Value, Error> {
-        let (post, _): (Value, Kwargs) = from_args(args)?;
+        let (data, _): (Value, Kwargs) = from_args(args)?;
 
         let env = state.env();
-        let ctx = get_context();
+        let ctx = get_context(snafu::location!()).map_err(|err| Error::new(ErrorKind::InvalidOperation, err.to_string()))?;
 
         let content = match ctx.get_template_page("social_media_share.html") {
             Some(page) => {
-                render!(in env, page.content.as_str(), post => post, posts => ctx.posts_value, pages => ctx.pages_value)
+                render!(in env, page.content.as_str(), data => data, posts => ctx.posts_value, pages => ctx.pages_value)
             }
             None => {
-                render!(in env, HTML, post => post, posts => ctx.posts_value, pages => ctx.pages_value)
+                render!(in env, HTML, data => data, posts => ctx.posts_value, pages => ctx.pages_value)
             }
         };
 

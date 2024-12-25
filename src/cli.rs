@@ -50,9 +50,13 @@ pub enum CreateType {
 
 #[derive(Clone, Debug, ValueEnum)]
 pub enum TemplateCommand {
-    /// Update template
+    /// Upgrade template to latest version
     #[value()]
-    Update,
+    Upgrade,
+
+    /// Deploy template
+    #[value()]
+    Deploy,
 }
 
 #[derive(Debug, Subcommand)]
@@ -79,7 +83,7 @@ pub enum Commands {
     },
 
     /// Start development server with live update
-    Start {
+    Server {
         port: Option<u16>,
 
         /// Render draft posts

@@ -7,7 +7,6 @@ pub mod alertbox;
 pub mod analytics;
 pub mod codeblock;
 pub mod contacts;
-pub mod fontawesome;
 pub mod gist;
 pub mod info;
 pub mod projects;

@@ -2,13 +2,13 @@
   <ul class="flex flex-col divide-y divide-slate-200">
     {%- for post in posts %}
     <li class="group cursor-pointer hover:bg-neutral-50 active:bg-neutral-50">
-      <a class="block px-0 md:px-6 py-4 text-inherit" href="{{ post_url(post.lang, post.slug) }}">
+      <a class="block px-0 md:px-6 py-4 text-inherit" href="{{ post_url(data.slug) }}">
         <div class="summary flex flex-row gap-8 text-slate-700">
           <div class="flex flex-1 flex-col gap-2">
-            <time class="text-xs text-slate-500 ">{{ post.date | formatdatetime("%B %d, %Y") }}</time>
-            <h2 class="font-medium mb-0 text-slate-700">{{ post.title -}}</h2>
+            <time class="text-xs text-slate-500 ">{{ data.date | formatdatetime("%B %d, %Y") }}</time>
+            <h2 class="font-medium mb-0 text-slate-700">{{ data.title -}}</h2>
             <p class="text-balance mb-0 text-slate-600 text-sm/6 flex flex-wrap ">
-              {%- for tag in post.tags %}
+              {%- for tag in data.tags %}
               <span class="inline-flex items-center rounded-md bg-blue-50 px-2 py-1 mr-2 text-xs font-medium text-blue-900 ring-1 ring-inset ring-blue-500/10">#{{ tag }}</span>
               {% endfor %}
             </p>

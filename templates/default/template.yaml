@@ -2,5 +2,6 @@ name: Default template
 pre-process:
 process:
   - cp style.css ../../public/assets/style.css
-post-process: 
+post-process:
+git_repo: 
 version: 1.0

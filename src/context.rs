@@ -5,15 +5,16 @@ use std::path::PathBuf;
 use std::str::FromStr;
 use std::sync::{Arc, OnceLock};
 
-use anyhow::{anyhow, Context};
 use console::style;
 use minijinja::Value;
 use parking_lot::{RwLock, RwLockReadGuard, RwLockWriteGuard};
 use serde::de::DeserializeOwned;
 use serde_yaml::from_str;
+use snafu::{OptionExt, ResultExt};
 
 use crate::config::TimugConfig;
 use crate::consts::{ASSETS_PATH, CONFIG_FILE_NAME, PAGES_PATH, POSTS_PATH, TEMPLATES_PATH};
+use crate::error::{CanonicalizeSnafu, ContextNotInitializedSnafu, CurrentDirChangeSnafu, FileNotFoundSnafu, NoCurrentDirSnafu, YamlDeserializationFailedSnafu};
 use crate::page::Page;
 use crate::pages::Pages;
 use crate::posts::Posts;
@@ -41,31 +42,37 @@ pub struct TimugContext {
 }
 
 impl TimugContext {
-    fn build(timug_path: Option<PathBuf>, draft: bool) -> anyhow::Result<Self> {
+    fn build(timug_path: Option<PathBuf>, draft: bool) -> crate::Result<Self> {
         let timug_path = match timug_path {
             Some(path) => match path.is_absolute() {
                 true => path,
-                false => current_dir()
-                    .map_err(|_| anyhow!("Failed to get current directory"))?
-                    .join(path)
-                    .canonicalize()?,
+                false => {
+                    let path = current_dir().context(NoCurrentDirSnafu)?.join(path);
+                    path.canonicalize().context(CanonicalizeSnafu { path })?
+                }
             },
-            None => current_dir().map_err(|_| anyhow!("Failed to get current directory"))?,
+            None => current_dir().context(NoCurrentDirSnafu)?,
         };
 
         let config_path = timug_path.join(CONFIG_FILE_NAME);
         log::debug!("{}: {}", style("Reading config file from").yellow().bold(), config_path.display());
 
-        let config_content = read_to_string(&config_path).map_err(|_| anyhow!("Failed to read config file"))?;
-        let mut config: TimugConfig = from_str(&config_content).map_err(|_| anyhow!("Failed to parse config file"))?;
+        let content = read_to_string(&config_path).context(FileNotFoundSnafu { path: config_path })?;
+        let mut config: TimugConfig = from_str(&content).context(YamlDeserializationFailedSnafu { content })?;
 
         if !config.blog_path.is_absolute() {
-            config.blog_path = timug_path.join(config.blog_path).canonicalize()?;
+            let tmp_path = timug_path.join(config.blog_path);
+            config.blog_path = tmp_path
+                .canonicalize()
+                .context(CanonicalizeSnafu { path: tmp_path })?;
             log::debug!("Blog path: {:?}", style(&config.blog_path).yellow());
         }
 
         if !config.deployment_folder.is_absolute() {
-            config.deployment_folder = timug_path.join(config.deployment_folder).canonicalize()?;
+            let tmp_path = timug_path.join(config.deployment_folder);
+            config.deployment_folder = tmp_path
+                .canonicalize()
+                .context(CanonicalizeSnafu { path: tmp_path })?;
             log::debug!("Deployment path: {:?}", style(&config.deployment_folder).yellow());
         }
 
@@ -76,8 +83,8 @@ impl TimugContext {
         let pages_path = Self::get_path(&config, PAGES_PATH);
         let statics_path = Self::get_path(&config, ASSETS_PATH);
 
-        let current_dir = std::env::current_dir()?;
-        std::env::set_current_dir(&timug_path)?;
+        let current_dir = std::env::current_dir().context(NoCurrentDirSnafu)?;
+        std::env::set_current_dir(&timug_path).context(CurrentDirChangeSnafu { path: timug_path })?;
 
         let git_folder: Option<PathBuf> = match std::process::Command::new("git")
             .args(["rev-parse", "--show-toplevel"])
@@ -95,7 +102,7 @@ impl TimugContext {
             _ => None,
         };
 
-        std::env::set_current_dir(&current_dir)?;
+        std::env::set_current_dir(&current_dir).context(CurrentDirChangeSnafu { path: current_dir })?;
 
         Ok(Self {
             config,
@@ -132,24 +139,22 @@ impl TimugContext {
     }
 }
 
-pub fn build_context(config_path: Option<PathBuf>, draft: bool) -> anyhow::Result<()> {
+pub fn build_context(config_path: Option<PathBuf>, draft: bool) -> crate::Result<()> {
     let context = TimugContext::build(config_path, draft)?;
     let _ = CONTEXT.set(context.into());
     Ok(())
 }
 
-pub fn get_context() -> RwLockReadGuard<'static, TimugContext> {
-    CONTEXT
+pub fn get_context(loc: snafu::Location) -> crate::Result<RwLockReadGuard<'static, TimugContext>> {
+    Ok(CONTEXT
         .get()
-        .context("Context not initialized")
-        .unwrap()
-        .read()
+        .context(ContextNotInitializedSnafu { loc })?
+        .read())
 }
 
-pub fn get_mut_context() -> RwLockWriteGuard<'static, TimugContext> {
-    CONTEXT
+pub fn get_mut_context(loc: snafu::Location) -> crate::Result<RwLockWriteGuard<'static, TimugContext>> {
+    Ok(CONTEXT
         .get()
-        .context("Context not initialized")
-        .unwrap()
-        .write()
+        .context(ContextNotInitializedSnafu { loc })?
+        .write())
 }

@@ -2,16 +2,18 @@ use axum::Router;
 use console::style;
 use notify::event::ModifyKind;
 use notify::{Event, EventKind, RecursiveMode, Watcher};
+use snafu::ResultExt;
 use std::net::SocketAddr;
 use std::sync::mpsc;
 use tower_http::{services::ServeDir, trace::TraceLayer};
 
 use crate::consts::DEFAULT_WEBSERVER_PORT;
 use crate::context::get_context;
+use crate::error::{CouldNotWatchFilesystemSnafu, FileSystemWatcherFailedSnafu};
 use crate::tools::inner_deploy_pages;
 
-pub fn start_webserver(port: Option<u16>) -> anyhow::Result<()> {
-    let ctx = get_context();
+pub fn start_webserver(port: Option<u16>) -> crate::Result<()> {
+    let ctx = get_context(snafu::location!())?;
     let deployment_path = ctx.config.deployment_folder.clone();
     drop(ctx);
 
@@ -39,16 +41,18 @@ pub fn start_webserver(port: Option<u16>) -> anyhow::Result<()> {
     Ok(())
 }
 
-fn change_watcher() -> anyhow::Result<()> {
-    let ctx = get_context();
+fn change_watcher() -> crate::Result<()> {
+    let ctx = get_context(snafu::location!())?;
     let deployment_folder = ctx.config.deployment_folder.clone();
     let blog_path = ctx.config.blog_path.clone();
     let git_folder = ctx.git_folder.as_ref().map(|path| path.join(".git"));
     drop(ctx);
 
     let (tx, rx) = mpsc::channel::<notify::Result<Event>>();
-    let mut watcher = notify::recommended_watcher(tx)?;
-    watcher.watch(&blog_path, RecursiveMode::Recursive)?;
+    let mut watcher = notify::recommended_watcher(tx).context(FileSystemWatcherFailedSnafu)?;
+    watcher
+        .watch(&blog_path, RecursiveMode::Recursive)
+        .context(CouldNotWatchFilesystemSnafu { path: blog_path })?;
 
     for event in rx.into_iter().flatten() {
         let mut need_rebuilding = true;

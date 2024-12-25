@@ -3,7 +3,7 @@ use std::sync::Arc;
 use minijinja::{
     render,
     value::{Object, ObjectRepr},
-    Error, State, Value,
+    Error, ErrorKind, State, Value,
 };
 use serde::{Deserialize, Serialize};
 
@@ -42,7 +42,7 @@ impl Object for Reading {
     }
 
     fn call(self: &Arc<Self>, state: &State<'_, '_>, _: &[Value]) -> Result<Value, Error> {
-        let ctx = get_context();
+        let ctx = get_context(snafu::location!()).map_err(|err| Error::new(ErrorKind::InvalidOperation, err.to_string()))?;
         if let Some(config) = ctx.get_config::<ReadingInfo>(Self::name()) {
             let env = state.env();
 

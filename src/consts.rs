@@ -19,6 +19,11 @@ pub const POSTS_PATH: &str = "posts";
 pub const PAGES_PATH: &str = "pages";
 pub const ASSETS_PATH: &str = "assets";
 pub const CONFIG_FILE_NAME: &str = "timug.yaml";
+pub const TEMPLATE_FILE_NAME: &str = "template.yaml";
+
+pub const PAGE_HTML: &str = "page.html";
+pub const POST_HTML: &str = "post.html";
+pub const POSTS_HTML: &str = "posts.html";
 
 pub const ROCKET: Emoji<'_, '_> = Emoji("🚀 ", ":-)");
 pub const SPARKLE: Emoji<'_, '_> = Emoji("✨ ", "#");

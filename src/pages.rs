@@ -8,18 +8,14 @@ use serde::{Deserialize, Serialize};
 
 use crate::{context::get_context, page::Page, tools::get_files};
 
-pub const POST_HTML: &str = "post.html";
-pub const PAGE_HTML: &str = "page.html";
-pub const POSTS_HTML: &str = "posts.html";
-
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 pub struct Pages {
     pub items: Vec<Arc<Page>>,
 }
 
 impl Pages {
-    pub fn load_base_pages(&mut self) -> anyhow::Result<()> {
-        let ctx = get_context();
+    pub fn load_base_pages(&mut self) -> crate::Result<()> {
+        let ctx = get_context(snafu::location!())?;
         let html_files = get_files(&ctx.template.path, "html")?;
 
         for html_path in html_files.iter() {
@@ -34,8 +30,8 @@ impl Pages {
         Ok(())
     }
 
-    pub fn load_custom_pages(&mut self) -> anyhow::Result<()> {
-        let ctx = get_context();
+    pub fn load_custom_pages(&mut self) -> crate::Result<()> {
+        let ctx = get_context(snafu::location!())?;
         let html_files = get_files(&ctx.pages_path, "html")?;
         let md_files = get_files(&ctx.pages_path, "md")?;
 

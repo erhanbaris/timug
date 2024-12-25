@@ -3,30 +3,35 @@ use std::{
     time::Instant,
 };
 
-use anyhow::Context;
 use pulldown_cmark::{Options, Parser};
+use snafu::prelude::*;
 use unidecode::unidecode;
 
-use crate::{consts::SPARKLE, engine::create_engine, error::TimugError};
+use crate::{
+    consts::SPARKLE,
+    engine::create_engine,
+    error::{CouldNotConvertOsStrSnafu, CouldNotGetFilenameSnafu, FileNotFoundSnafu, ReadingDirectoryFailedSnafu, Result},
+};
 
-pub fn get_file_name(path: &Path) -> anyhow::Result<String> {
+pub fn get_file_name(path: &Path) -> Result<String> {
     Ok(path
         .file_name()
-        .context("Could not get filename")?
+        .context(CouldNotGetFilenameSnafu { path })?
         .to_str()
-        .context("Could not convert to string")?
+        .context(CouldNotConvertOsStrSnafu { path })?
         .to_lowercase())
 }
 
-pub fn get_path(path: &Path) -> anyhow::Result<String> {
+pub fn get_path(path: &Path) -> Result<String> {
     Ok(path
         .to_str()
-        .context("Could not convert to string")?
+        .context(CouldNotConvertOsStrSnafu { path })?
         .to_string())
 }
 
-pub fn get_files(path: &PathBuf, extension: &str) -> anyhow::Result<Vec<PathBuf>> {
-    let paths = std::fs::read_dir(path)?
+pub fn get_files(path: &PathBuf, extension: &str) -> Result<Vec<PathBuf>> {
+    let paths = std::fs::read_dir(path)
+        .context(ReadingDirectoryFailedSnafu { path })?
         .flatten()
         .map(|dir_entry| dir_entry.path())
         .filter_map(|path| {
@@ -44,11 +49,9 @@ pub fn get_files(path: &PathBuf, extension: &str) -> anyhow::Result<Vec<PathBuf>
     Ok(paths)
 }
 
-pub fn get_file_content(path: &PathBuf) -> Result<String, TimugError> {
-    match std::fs::read_to_string(path) {
-        Ok(content) => Ok(content),
-        Err(error) => Err(TimugError::FileNotFound(path.to_string_lossy().to_string(), error.to_string())),
-    }
+pub fn get_file_content(path: &PathBuf) -> Result<String> {
+    let content = std::fs::read_to_string(path).context(FileNotFoundSnafu { path })?;
+    Ok(content)
 }
 
 pub fn parse_yaml(content: &'_ str) -> Parser<'_> {
@@ -109,7 +112,7 @@ pub fn parse_yaml_front_matter(content: &'_ str) -> FrontMatterInfo<'_> {
     }
 }
 
-pub fn inner_deploy_pages() -> anyhow::Result<()> {
+pub fn inner_deploy_pages() -> Result<()> {
     let started = Instant::now();
     let mut engine = create_engine()?;
     engine.run()?;

@@ -34,7 +34,7 @@ impl Object for Info {
     fn call(self: &Arc<Self>, state: &State<'_, '_>, args: &[Value]) -> Result<Value, Error> {
         let (_, kwargs): (Option<&str>, Kwargs) = from_args(args)?;
 
-        let ctx = get_context();
+        let ctx = get_context(snafu::location!()).map_err(|err| Error::new(ErrorKind::InvalidOperation, err.to_string()))?;
         let caller: Value = kwargs.get("caller")?;
         let content = caller.call(state, args!())?;
 

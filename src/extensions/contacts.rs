@@ -3,7 +3,7 @@ use std::sync::Arc;
 use minijinja::{
     render,
     value::{Object, ObjectRepr},
-    Error, State, Value,
+    Error, ErrorKind, State, Value,
 };
 use serde::{Deserialize, Serialize};
 
@@ -40,7 +40,7 @@ impl Object for Contacts {
     }
 
     fn call(self: &Arc<Self>, state: &State<'_, '_>, _: &[Value]) -> Result<Value, Error> {
-        let ctx = get_context();
+        let ctx = get_context(snafu::location!()).map_err(|err| Error::new(ErrorKind::InvalidOperation, err.to_string()))?;
         let env = state.env();
 
         let content = match ctx.get_template_page("contacts.html") {

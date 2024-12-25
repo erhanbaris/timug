@@ -3,6 +3,7 @@ mod cli;
 mod config;
 mod consts;
 mod context;
+mod document;
 mod engine;
 mod error;
 mod extensions;
@@ -18,13 +19,15 @@ mod tags;
 mod template;
 mod tools;
 
-use anyhow::Result;
 use application::{create_page, create_post, execute_template, start_create_new_project, start_deploy_pages, start_server};
 use clap::Parser;
 use cli::{CreateType, LogLevel};
 use env_logger::fmt::style;
 use log::{Level, LevelFilter};
 use std::io::Write;
+
+pub use crate::error::Error;
+pub use crate::error::Result;
 
 fn main() -> Result<()> {
     let cli = cli::Cli::parse();
@@ -63,7 +66,7 @@ fn main() -> Result<()> {
     let result = match cli.command {
         cli::Commands::Init => start_create_new_project(cli.path),
         cli::Commands::Deploy { draft } => start_deploy_pages(cli.path, draft),
-        cli::Commands::Start { port, draft } => start_server(cli.path, port, draft),
+        cli::Commands::Server { port, draft } => start_server(cli.path, port, draft),
         cli::Commands::Create { _type, title, draft } => match _type {
             CreateType::Post => create_post(cli.path, title, draft),
             CreateType::Page => create_page(cli.path, title, draft),

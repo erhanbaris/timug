@@ -52,9 +52,9 @@ The command will generate static files and copy them to the **public** directory
 
 ### Live preview
 ```bash
-timug start
-timug --path /home/user/my_blog/ start
-timug --path /home/user/my_blog/ start 9090 # For custom port
+timug server
+timug --path /home/user/my_blog/ server
+timug --path /home/user/my_blog/ server 9090 # For custom port
 ```
 It will start a local server and you can preview your blog on your browser.
 

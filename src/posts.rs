@@ -1,21 +1,21 @@
-use std::{path::PathBuf, sync::Arc};
+use std::sync::Arc;
 
-use anyhow::Context;
 use chrono::Datelike;
-use console::style;
 use minijinja::{
-    context,
     value::{Enumerator, Object},
     Value,
 };
 use serde::{Deserialize, Serialize};
+use snafu::{OptionExt, ResultExt};
 
 use crate::{
+    consts::POST_HTML,
     context::{get_context, get_mut_context},
+    document::{DocumentContext, DocumentType},
     engine::{RenderEngine, Renderable},
-    pages::POST_HTML,
+    error::{FailedToAddTagSnafu, FolderCreationFailedSnafu},
     post::Post,
-    tools::{get_file_name, get_files, parse_yaml},
+    tools::get_files,
 };
 
 #[derive(Debug, Default, Serialize, Deserialize)]
@@ -24,8 +24,8 @@ pub struct Posts {
 }
 
 impl Posts {
-    pub fn load() -> anyhow::Result<Self> {
-        let mut ctx = get_mut_context();
+    pub fn load() -> crate::Result<Self> {
+        let mut ctx = get_mut_context(snafu::location!())?;
         let mut posts = Vec::new();
         let files = get_files(&ctx.posts_path, "md")?;
 
@@ -38,8 +38,8 @@ impl Posts {
 
             for tag in post.tags() {
                 ctx.tags
-                    .add(tag, post.clone())
-                    .context(anyhow::anyhow!("Failed to add tag"))?;
+                    .add(tag.clone(), post.clone())
+                    .context(FailedToAddTagSnafu { tag })?;
             }
 
             posts.push(post);
@@ -52,54 +52,39 @@ impl Posts {
     }
 }
 
-pub struct PostsContext {
-    pub deployment_folder: PathBuf,
-}
-
 impl Renderable for Posts {
-    type Context = PostsContext;
-    fn render(&self, engine: &RenderEngine<'_>, ctx: PostsContext) -> anyhow::Result<()> {
-        let general_ctx = get_context();
+    type Context = ();
+    fn render(&self, engine: &RenderEngine<'_>, _: Self::Context) -> crate::Result<()> {
+        let general_ctx = get_context(snafu::location!())?;
 
         for (index, post) in self.posts.iter().enumerate() {
             if !general_ctx.draft && post.draft() {
                 return Ok(());
             }
 
-            let context = engine.create_context();
+            let source_path = post.path();
             let date = post.date();
-            let file_path = ctx
+            let target_folder = general_ctx
+                .config
                 .deployment_folder
                 .join(date.year().to_string())
                 .join(date.month().to_string())
                 .join(date.day().to_string());
-            let file_name = file_path.join(format!("{}.html", post.slug()));
 
-            engine.update_status(style("Rendering post").bold().cyan().to_string(), get_file_name(&file_name)?.as_str());
+            std::fs::create_dir_all(&target_folder).context(FolderCreationFailedSnafu { path: target_folder.clone() })?;
 
-            if post.content().contains("{%") {
-                let content = engine.env.render_str(post.content().as_str(), &context)?;
-                post.set_content(content);
-            }
-
-            let mut content = String::new();
-            pulldown_cmark::html::push_html(&mut content, parse_yaml(post.content().as_str()));
-            post.set_content(content);
-
-            let template = engine.env.get_template(POST_HTML)?;
-
-            let context = context! {
-                ..context! {
-                    post => Value::from_dyn_object(post.clone()),
-                    index => index,
-                },
-                ..context.clone()
+            let target_file_path = target_folder.join(format!("{}.html", post.slug()));
+            let render_ctx = DocumentContext {
+                source_file_path: source_path.clone(),
+                target_file_path,
+                template: POST_HTML.to_string(),
+                title: post.title().clone(),
+                index,
+                data: Value::from_dyn_object(post.clone()),
             };
 
-            let content: String = template.render(context)?;
-            std::fs::create_dir_all(file_path)?;
-            engine.compress_and_write(content, &file_name)?;
-            engine.update_status(style("Generated post").bold().green().to_string(), get_file_name(&file_name)?.as_str());
+            // Render the page
+            DocumentType::Markdown.render(engine, render_ctx)?;
         }
 
         Ok(())

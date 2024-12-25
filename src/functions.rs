@@ -15,7 +15,7 @@ impl<'a> RenderEngine<'a> {
         Ok(current_date.year().into())
     }
 
-    fn post_url(lang: String, slug: String, state: &State) -> Result<Value, Error> {
+    fn post_url(slug: String, state: &State) -> Result<Value, Error> {
         let posts = match state.lookup("posts") {
             Some(posts) => posts,
             None => return Err(Error::new(ErrorKind::UndefinedError, "'posts' not found".to_string())),
@@ -31,7 +31,7 @@ impl<'a> RenderEngine<'a> {
 
         let post = match posts.posts.iter().find(|post| post.slug().as_str() == slug) {
             Some(post) => post,
-            None => return Err(Error::new(ErrorKind::UndefinedError, format!("Post (lang: '{}', slug: '{}') could not found", lang, slug))),
+            None => return Err(Error::new(ErrorKind::UndefinedError, format!("Post (slug: '{}') could not found", slug))),
         };
 
         let date = post.date();
