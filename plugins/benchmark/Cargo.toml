@@ -7,4 +7,4 @@ authors = [ "Erhan BARIS <erhanbaris@gmail.com>" ]
 [dependencies]
 lipsum = "0.9.1"
 rand = "0.8.5"
-rand_hc = "0.3.2"
+rand_hc = "0.4.0"
